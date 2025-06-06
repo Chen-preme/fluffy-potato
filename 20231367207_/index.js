@@ -21,6 +21,7 @@ app.use('/main',express.static(path.join(__dirname, 'main')));
 
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
+
 app.get('/', (req, res) => {
     res.render('main/index.html', { title: '欢迎页面' });
   });
