@@ -4,9 +4,20 @@ const config = require('./config');
 const mongoose = require('mongoose');
 const apiRouter = require('./routers/api');
 const app = express();
+const session = require('express-session');
 
 const User = require('./models/user');
 
+
+app.use(session({
+  secret: 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000, // 1 天
+    httpOnly: true              // 安全设置
+  }
+}));
 app.listen(config.app.PORT,()=>{
     console.log(`Server is running on port ${config.app.PORT}`);
 })
@@ -52,3 +63,6 @@ mongoose.connect('mongodb://127.0.0.1:27017/mydb')
   .catch(err => {
     console.error(' MongoDB 连接失败:', err);
   });
+
+
+
