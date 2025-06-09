@@ -17,3 +17,5 @@ router.get('/detail', (req, res) => {
         isLogin: req.session.isLogin
     });
 });
+
+module.exports = router;

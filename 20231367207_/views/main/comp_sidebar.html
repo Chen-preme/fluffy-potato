@@ -12,20 +12,20 @@
 
     <div class="rightBox" id="loginBox">
         <div class="title"><span>登录</span></div>
-        <div class="line"><span class="colDark">用户名：</span><input type="text" /><em></em></div>
+        <div class="line"><span class="colDark">用户名：</span><input  type="text" /><em></em></div>
         <div class="line"><span class="colDark">密码：</span><input type="password" /><em></em></div>
         <div class="line"><span class="colDark"></span><button>登 录</button></div>
-        <p class="textRight">还没注册？<a href="#" class="colMint">马上注册</a>　</p>
+        <p class="textRight">还没注册？<a href="javascript:void(0)" class="colMint">马上注册</a>　</p>
         <p class="colWarning textCenter"></p>
     </div>
 
-    <div class="rightBox" id="registerBox">
+    <div class="rightBox" id="registerBox" style="display: none;">
         <div class="title"><span>注册</span></div>
-        <div class="line"><span class="colDark">用户名：</span><input type="text" /></div>
-        <div class="line"><span class="colDark">密码：</span><input type="password" /></div>
-        <div class="line"><span class="colDark">确认：</span><input type="password" /></div>
+        <div class="line"><span class="colDark">用户名：</span><input name="username" id="username" type="text" /></div>
+        <div class="line"><span class="colDark">密码：</span><input name="password" id="password" type="password" /></div>
+        <div class="line"><span class="colDark">确认：</span><input name="repassword" id="repassword" type="repassword" /></div>
         <div class="line"><span class="colDark"></span><button>注 册</button></div>
-        <p class="textRight">已有账号？<a href="#" class="colMint">马上登录</a>　</p>
+        <p class="textRight">已有账号？<a href="javascript:void(0)" class="colMint">马上登录</a>　</p>
         <p class="colWarning textCenter"></p>
     </div>
 
@@ -36,3 +36,4 @@
             <p><a href="http://www.taobao.com" target="_blank" class="colDanger">淘宝</a></p>
         </div>
     </div>
+<script src="/public/js/sidebar.js"></script>
