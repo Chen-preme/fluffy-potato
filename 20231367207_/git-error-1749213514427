@@ -1,3 +1,0 @@
-> git add -A -- .
-error: 'fluffy-potato/' 没有检出一个提交
-fatal: 添加文件失败
