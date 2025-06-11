@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const router = express.Router();
 const User = require('../models/user');
 
+const session = require('express-session');
 
 router.post('/user/register', async (req, res) => {
     
@@ -53,53 +54,64 @@ router.post('/user/register', async (req, res) => {
 });
 
 //登录
-router.post('/user/login', async (req, res) => {
-    const { username, password } = req.body;
-  
-    // 基础校验
-    if (!username || !password) {
-      return res.json({ code: 1, msg: '用户名和密码不能为空' });
-    }
-  
-    try {
-      // 查找用户
-      const user = await User.findOne({ username });
-      if (!user) {
-        return res.json({ code: 2, msg: '用户不存在' });
-      }
-  
-      //  密码比对
-      const isMatch = bcrypt.compareSync(password, user.password);
-      if (!isMatch) {
-        return res.json({ code: 3, msg: '密码错误' });
-      }
-  
-      
-      req.session.user = {
-        _id: user._id,
-        username: user.username
-      };
-  
-      return res.json({ code: 0, msg: '登录成功', user: req.session.user });
-    } catch (err) {
-      console.error('登录异常:', err);
-      return res.status(500).json({ code: 500, msg: '服务器错误' });
-    }
-  });
 
-  router.get('/user/info', (req, res) => {
-    if (req.session.user) {
-      res.json({ code: 0, user: req.session.user });
-    } else {
-      res.json({ code: 1, msg: '未登录' });
+router.post('/user/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.json({ code: 1, msg: '用户名和密码不能为空' });
+  }
+
+  try {
+    const user = await User.findOne({ username });
+
+    if (!user || !bcrypt.compareSync(password, user.password)) {
+      return res.json({ code: 2, msg: '用户名或密码错误' });
     }
-  });
-  
-  router.get('/user/logout', (req, res) => {
-    req.session.destroy();
+
+    // 设置 session
+    req.session.user = {
+      _id: user._id,
+      username: user.username,
+      isAdmin: user.isAdmin
+    };
+   
+
+    return res.json({
+      code: 0,
+      msg: '登录成功',
+      userInfo: {
+        _id: user._id,
+        username: user.username,
+        isAdmin: user.isAdmin
+      }
+    });
+
+  } catch (err) {
+    console.error('登录异常:', err);
+    return res.status(500).json({ code: 500, msg: '服务器内部错误' });
+  }
+});
+
+
+
+router.get('/user/info', (req, res) => {
+  if (req.session.user) {
+    res.json({ code: 0, user: req.session.user });
+  } else {
+    res.json({ code: 1, msg: '未登录' });
+  }
+});
+
+router.get('/user/logout', (req, res) => {
+  req.session.destroy((err) => { // 推荐使用回调函数处理 destroy 结果
+    if (err) {
+      console.error('Session destroy error:', err);
+      return res.json({ code: 1, msg: '退出登录失败' });
+    }
     res.json({ code: 0, msg: '已退出登录' });
   });
-  
+});
 
 
 module.exports = router;

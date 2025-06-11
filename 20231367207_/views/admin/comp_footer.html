@@ -1,0 +1,18 @@
+<!-- Bootstrap Bundle with Popper -->
+<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/js/bootstrap.bundle.min.js"></script>
+<!-- jQuery -->
+<script src="/public/js/jquery-3.7.1.min.js"></script>
+<script>
+    // 管理后台专用脚本
+    $(document).ready(function() {
+        // 激活当前菜单项
+        const currentPath = window.location.pathname;
+        $('.sidebar .nav-link').each(function() {
+            if ($(this).attr('href') === currentPath) {
+                $(this).addClass('active');
+            } else {
+                $(this).removeClass('active');
+            }
+        });
+    });
+</script>

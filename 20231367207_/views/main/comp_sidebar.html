@@ -1,39 +1,39 @@
 <div class="mainRight">
-            
-
-    <div class="rightBox" style="display: none;" id="userInfo">
-        <div class="title"><span>用户信息</span></div>
-        <p><span class="colDark">admin</span></p>
-        
-        <p><span class="colDanger">你好，你是管理员，<a href="/admin">你可以点击这里进入管理</a></span></p>
-        
-        <p><span class="colDark"><a href="javascript:void(0)" id="logoutBtn">退出</a></span></p>
-    </div>
-
-    <div class="rightBox" id="loginBox">
-        <div class="title"><span>登录</span></div>
-        <div class="line"><span class="colDark">用户名：</span><input  id="username" type="text" /><em></em></div>
-        <div class="line"><span class="colDark">密码：</span><input id="password" type="password" /><em></em></div>
-        <div class="line"><span class="colDark"></span><button>登 录</button></div>
-        <p class="textRight">还没注册？<a href="javascript:void(0)" class="colMint">马上注册</a>　</p>
-        <p class="colWarning textCenter"></p>
-    </div>
-
-    <div class="rightBox" id="registerBox" style="display: none;">
-        <div class="title"><span>注册</span></div>
-        <div class="line"><span class="colDark">用户名：</span><input name="username" id="username" type="text" /></div>
-        <div class="line"><span class="colDark">密码：</span><input name="password" id="password" type="password" /></div>
-        <div class="line"><span class="colDark">确认：</span><input name="repassword" id="repassword" type="password" /></div>
-        <div class="line"><span class="colDark"></span><button>注 册</button></div>
-        <p class="textRight">已有账号？<a href="javascript:void(0)" class="colMint">马上登录</a>　</p>
-        <p class="colWarning textCenter"></p>
-    </div>
-
+    <% if (userInfo && userInfo.username) { %>
+        <!-- 用户已登录，显示用户信息 -->
+        <div class="rightBox" id="userInfo">
+            <div class="title"><span>用户信息</span></div>
+            <p><span class="colDark"><%= userInfo.username %></span></p>
+            <% if (userInfo.isAdmin) { %>
+                <p class="colDanger">你好，你是管理员，<a href="/admin">你可以点击这里进入管理</a></p>
+            <% } %>
+            <p><span class="colDark"><a href="javascript:void(0)" id="logoutBtn">退出</a></span></p>
+        </div>
+    <% } else { %>
+        <!-- 未登录，显示登录框 -->
+        <div class="rightBox" id="loginBox">
+            <div class="title"><span>登录</span></div>
+            <div class="line"><span class="colDark">用户名：</span><input id="username" type="text" /><em></em></div>
+            <div class="line"><span class="colDark">密码：</span><input id="password" type="password" /><em></em></div>
+            <div class="line"><span class="colDark"></span><button id="loginBtn">登 录</button></div>
+            <p class="textRight">还没注册？<a href="javascript:void(0)" class="colMint" id="showRegister">马上注册</a>　</p>
+            <p class="colWarning textCenter" id="loginMsg"></p>
+        </div>
+        <div class="rightBox" id="registerBox" style="display: none;">
+            <div class="title"><span>注册</span></div>
+            <div class="line"><span class="colDark">用户名：</span><input name="username" id="reg_username" type="text" /></div>
+            <div class="line"><span class="colDark">密码：</span><input name="password" id="reg_password" type="password" /></div>
+            <div class="line"><span class="colDark">确认：</span><input name="repassword" id="reg_repassword" type="password" /></div>
+            <div class="line"><span class="colDark"></span><button id="registerBtn">注 册</button></div>
+            <p class="textRight">已有账号？<a href="javascript:void(0)" class="colMint" id="showLogin">马上登录</a>　</p>
+            <p class="colWarning textCenter" id="registerMsg"></p>
+        </div>
+    <% } %>
 
     <div class="rightBox">
         <div class="title"><span>社区</span></div>
-            <p><a href="http://www.baidu.com" target="_blank" class="colDanger">百度</a></p>
-            <p><a href="http://www.taobao.com" target="_blank" class="colDanger">淘宝</a></p>
-        </div>
+        <p><a href="http://www.baidu.com" target="_blank" class="colDanger">百度</a></p>
+        <p><a href="http://www.taobao.com" target="_blank" class="colDanger">淘宝</a></p>
     </div>
+</div>
 <script src="/public/js/sidebar.js"></script>
