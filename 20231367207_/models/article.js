@@ -13,6 +13,19 @@ const articleSchema = new mongoose.Schema({
     type: String, // 或 userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
     required: true
   },
+  category: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    required: true
+  },
+  isTop: {
+    type: Boolean,
+    default: false
+  },
+  isPublic: {
+    type: Boolean,
+    default: true
+  },
   createTime: {
     type: Date,
     default: Date.now

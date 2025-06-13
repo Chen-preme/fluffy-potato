@@ -2,6 +2,8 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const router = express.Router();
 const User = require('../models/user');
+const Category = require('../models/category');
+const Article = require('../models/article');
 // 管理员权限检查中间件
 router.use(function(req, res, next) {
     if (!req.userInfo || !req.userInfo.isAdmin) { // 增加对 req.userInfo 存在的检查
@@ -116,6 +118,448 @@ router.post('/user/toggle-freeze', async (req, res) => {
     } catch (err) {
         console.error('切换用户状态失败:', err);
         res.status(500).json({ success: false, message: '服务器错误，操作失败' });
+    }
+});
+
+// 分类管理路由
+router.get('/categories', async (req, res) => {
+    try {
+        // 获取当前页码，默认为第1页
+        const currentPage = parseInt(req.query.page) || 1;
+        // 每页显示的分类数量
+        const pageSize = 10;
+        // 计算跳过的文档数量
+        const skip = (currentPage - 1) * pageSize;
+
+        // 获取分类总数
+        const totalCategories = await Category.countDocuments({});
+        // 计算总页数
+        const totalPages = Math.ceil(totalCategories / pageSize);
+
+        // 从数据库中查询分类，按排序字段排序
+        const categories = await Category.find({})
+            .sort({ order: 1, _id: -1 })
+            .skip(skip)
+            .limit(pageSize);
+
+        res.render('admin/category_index.html', {
+            title: '分类管理',
+            userInfo: req.userInfo,
+            categories: categories,
+            currentPage: currentPage,
+            totalPages: totalPages,
+            pageSize: pageSize,
+            totalCategories: totalCategories
+        });
+
+    } catch (err) {
+        console.error('获取分类列表失败:', err);
+        res.status(500).send('服务器错误，无法获取分类列表。');
+    }
+});
+
+// 添加分类
+router.post('/category/add', async (req, res) => {
+    try {
+        const { name, description } = req.body;
+        
+        if (!name || name.trim() === '') {
+            return res.status(400).json({ success: false, message: '分类名称不能为空' });
+        }
+        
+        // 检查分类名称是否已存在
+        const existingCategory = await Category.findOne({ name: name.trim() });
+        if (existingCategory) {
+            return res.status(400).json({ success: false, message: '分类名称已存在' });
+        }
+        
+        // 获取最大排序值
+        const maxOrderCategory = await Category.findOne().sort({ order: -1 });
+        const nextOrder = maxOrderCategory ? maxOrderCategory.order + 1 : 0;
+        
+        // 创建新分类
+        const newCategory = new Category({
+            name: name.trim(),
+            description: description || '',
+            order: nextOrder
+        });
+        
+        await newCategory.save();
+        
+        res.json({ success: true, message: '分类添加成功' });
+    } catch (err) {
+        console.error('添加分类失败:', err);
+        res.status(500).json({ success: false, message: '服务器错误，添加分类失败' });
+    }
+});
+
+// 更新分类
+router.post('/category/update', async (req, res) => {
+    try {
+        const { id, name, description } = req.body;
+        
+        if (!id) {
+            return res.status(400).json({ success: false, message: '分类ID不能为空' });
+        }
+        
+        if (!name || name.trim() === '') {
+            return res.status(400).json({ success: false, message: '分类名称不能为空' });
+        }
+        
+        // 检查分类是否存在
+        const category = await Category.findById(id);
+        if (!category) {
+            return res.status(404).json({ success: false, message: '分类不存在' });
+        }
+        
+        // 检查新名称是否与其他分类重复
+        const existingCategory = await Category.findOne({ name: name.trim(), _id: { $ne: id } });
+        if (existingCategory) {
+            return res.status(400).json({ success: false, message: '分类名称已存在' });
+        }
+        
+        // 更新分类
+        const updatedCategory = await Category.findByIdAndUpdate(id, {
+            name: name.trim(),
+            description: description || ''
+        }, { new: true });
+        
+        res.json({ success: true, message: '分类更新成功' });
+    } catch (err) {
+        console.error('更新分类失败:', err);
+        res.status(500).json({ success: false, message: '服务器错误，更新分类失败' });
+    }
+});
+
+// 删除分类
+router.post('/category/delete', async (req, res) => {
+    try {
+        const { id } = req.body;
+        
+        if (!id) {
+            return res.status(400).json({ success: false, message: '分类ID不能为空' });
+        }
+        
+        // 检查分类是否存在
+        const category = await Category.findById(id);
+        if (!category) {
+            return res.status(404).json({ success: false, message: '分类不存在' });
+        }
+        
+        // 检查是否有文章使用此分类
+        const Article = require('../models/article');
+        const articlesCount = await Article.countDocuments({ category: id });
+        
+        if (articlesCount > 0) {
+            return res.status(400).json({ 
+                success: false, 
+                message: `无法删除，该分类下有${articlesCount}篇文章` 
+            });
+        }
+        
+        // 删除分类
+        await Category.findByIdAndDelete(id);
+        
+        // 重新排序其他分类
+        const remainingCategories = await Category.find({}).sort({ order: 1 });
+        for (let i = 0; i < remainingCategories.length; i++) {
+            await Category.findByIdAndUpdate(remainingCategories[i]._id, { order: i });
+        }
+        
+        res.json({ success: true, message: '分类删除成功' });
+    } catch (err) {
+        console.error('删除分类失败:', err);
+        res.status(500).json({ success: false, message: '服务器错误，删除分类失败' });
+    }
+});
+
+// 改变分类排序
+router.post('/category/change-order', async (req, res) => {
+    try {
+        const { id, direction } = req.body;
+        
+        if (!id || !direction) {
+            return res.status(400).json({ success: false, message: '参数不完整' });
+        }
+        
+        // 获取当前分类
+        const currentCategory = await Category.findById(id);
+        if (!currentCategory) {
+            return res.status(404).json({ success: false, message: '分类不存在' });
+        }
+        
+        // 根据方向查找相邻的分类
+        let adjacentCategory;
+        if (direction === 'up') {
+            // 查找排序值小于当前分类的最大排序值的分类
+            adjacentCategory = await Category.findOne({ 
+                order: { $lt: currentCategory.order } 
+            }).sort({ order: -1 });
+        } else if (direction === 'down') {
+            // 查找排序值大于当前分类的最小排序值的分类
+            adjacentCategory = await Category.findOne({ 
+                order: { $gt: currentCategory.order } 
+            }).sort({ order: 1 });
+        } else {
+            return res.status(400).json({ success: false, message: '无效的方向参数' });
+        }
+        
+        // 如果没有相邻分类，则不需要交换
+        if (!adjacentCategory) {
+            return res.json({ success: true, message: '排序未改变' });
+        }
+        
+        // 交换两个分类的排序值
+        const tempOrder = currentCategory.order;
+        currentCategory.order = adjacentCategory.order;
+        adjacentCategory.order = tempOrder;
+        
+        await currentCategory.save();
+        await adjacentCategory.save();
+        
+        res.json({ success: true, message: '排序更新成功' });
+    } catch (err) {
+        console.error('更改排序失败:', err);
+        res.status(500).json({ success: false, message: '服务器错误，更改排序失败' });
+    }
+});
+
+// 文章管理路由
+router.get('/articles', async (req, res) => {
+    try {
+        // 获取当前页码，默认为第1页
+        const currentPage = parseInt(req.query.page) || 1;
+        // 每页显示的文章数量
+        const pageSize = 10;
+        // 计算跳过的文档数量
+        const skip = (currentPage - 1) * pageSize;
+
+        // 获取文章总数
+        const totalArticles = await Article.countDocuments({});
+        // 计算总页数
+        const totalPages = Math.ceil(totalArticles / pageSize);
+
+        // 从数据库中查询文章，添加分页，并关联分类信息
+        const articles = await Article.find({})
+            .populate('category')
+            .sort({ createTime: -1 })
+            .skip(skip)
+            .limit(pageSize);
+
+        // 获取所有分类，用于添加和编辑文章时选择
+        const categories = await Category.find({}).sort({ order: 1 });
+
+        res.render('admin/article_index.html', {
+            title: '文章管理',
+            userInfo: req.userInfo,
+            articles: articles,
+            categories: categories,
+            currentPage: currentPage,
+            totalPages: totalPages,
+            pageSize: pageSize,
+            totalArticles: totalArticles
+        });
+
+    } catch (err) {
+        console.error('获取文章列表失败:', err);
+        res.status(500).send('服务器错误，无法获取文章列表。');
+    }
+});
+
+// 添加文章
+router.post('/article/add', async (req, res) => {
+    try {
+        const { title, categoryId, content, isTop, isPublic } = req.body;
+        
+        // 验证必填字段
+        if (!title || title.trim() === '') {
+            return res.json({ code: 1, message: '文章标题不能为空' });
+        }
+        
+        if (!categoryId) {
+            return res.json({ code: 1, message: '请选择文章分类' });
+        }
+        
+        if (!content || content.trim() === '') {
+            return res.json({ code: 1, message: '文章内容不能为空' });
+        }
+        
+        // 检查分类是否存在
+        const categoryExists = await Category.findById(categoryId);
+        if (!categoryExists) {
+            return res.json({ code: 1, message: '所选分类不存在' });
+        }
+        
+        // 创建新文章
+        const newArticle = new Article({
+            title: title.trim(),
+            content: content.trim(),
+            category: categoryId,
+            author: req.userInfo.username, // 使用当前登录用户作为作者
+            isTop: isTop === 'true' || isTop === true ? true : false,
+            isPublic: isPublic === 'false' || isPublic === false ? false : true
+        });
+        
+        await newArticle.save();
+        
+        res.json({ code: 0, message: '文章添加成功' });
+    } catch (err) {
+        console.error('添加文章失败:', err);
+        res.json({ code: 1, message: '服务器错误，添加文章失败' });
+    }
+});
+
+// 获取文章详情
+router.get('/article/info', async (req, res) => {
+    try {
+        const { id } = req.query;
+        
+        if (!id) {
+            return res.json({ code: 1, message: '文章ID不能为空' });
+        }
+        
+        // 查询文章详情
+        const article = await Article.findById(id).populate('category');
+        
+        if (!article) {
+            return res.json({ code: 1, message: '文章不存在' });
+        }
+        
+        res.json({ code: 0, message: '获取成功', data: article });
+    } catch (err) {
+        console.error('获取文章详情失败:', err);
+        res.json({ code: 1, message: '服务器错误，获取文章详情失败' });
+    }
+});
+
+// 更新文章
+router.post('/article/update', async (req, res) => {
+    try {
+        const { id, title, categoryId, content, isTop, isPublic } = req.body;
+        
+        // 验证必填字段
+        if (!id) {
+            return res.json({ code: 1, message: '文章ID不能为空' });
+        }
+        
+        if (!title || title.trim() === '') {
+            return res.json({ code: 1, message: '文章标题不能为空' });
+        }
+        
+        if (!categoryId) {
+            return res.json({ code: 1, message: '请选择文章分类' });
+        }
+        
+        if (!content || content.trim() === '') {
+            return res.json({ code: 1, message: '文章内容不能为空' });
+        }
+        
+        // 查找文章
+        const article = await Article.findById(id);
+        if (!article) {
+            return res.json({ code: 1, message: '文章不存在' });
+        }
+        
+        // 检查分类是否存在
+        const categoryExists = await Category.findById(categoryId);
+        if (!categoryExists) {
+            return res.json({ code: 1, message: '所选分类不存在' });
+        }
+        
+        // 更新文章
+        article.title = title.trim();
+        article.content = content.trim();
+        article.category = categoryId;
+        article.isTop = isTop === 'true' || isTop === true ? true : false;
+        article.isPublic = isPublic === 'false' || isPublic === false ? false : true;
+        
+        await article.save();
+        
+        res.json({ code: 0, message: '文章更新成功' });
+    } catch (err) {
+        console.error('更新文章失败:', err);
+        res.json({ code: 1, message: '服务器错误，更新文章失败' });
+    }
+});
+
+// 删除文章
+router.post('/article/delete', async (req, res) => {
+    try {
+        const { id } = req.body;
+        
+        if (!id) {
+            return res.json({ code: 1, message: '文章ID不能为空' });
+        }
+        
+        // 检查文章是否存在
+        const article = await Article.findById(id);
+        if (!article) {
+            return res.json({ code: 1, message: '文章不存在' });
+        }
+        
+        // 删除文章
+        await Article.findByIdAndDelete(id);
+        
+        res.json({ code: 0, message: '文章删除成功' });
+    } catch (err) {
+        console.error('删除文章失败:', err);
+        res.json({ code: 1, message: '服务器错误，删除文章失败' });
+    }
+});
+
+// 切换文章置顶状态
+router.post('/article/toggle-top', async (req, res) => {
+    try {
+        // 获取参数
+        const { id, isTop } = req.body;
+
+        // 参数校验
+        if (!id) {
+            return res.json({ code: 1, message: '文章ID不能为空' });
+        }
+
+        // 查找文章
+        const article = await Article.findById(id);
+        if (!article) {
+            return res.json({ code: 1, message: '文章不存在' });
+        }
+
+        // 更新置顶状态
+        article.isTop = isTop;
+        await article.save();
+
+        res.json({ code: 0, message: '更新成功' });
+    } catch (err) {
+        console.error('切换文章置顶状态失败:', err);
+        res.json({ code: 1, message: '服务器错误' });
+    }
+});
+
+// 切换文章公开状态
+router.post('/article/toggle-public', async (req, res) => {
+    try {
+        // 获取参数
+        const { id, isPublic } = req.body;
+
+        // 参数校验
+        if (!id) {
+            return res.json({ code: 1, message: '文章ID不能为空' });
+        }
+
+        // 查找文章
+        const article = await Article.findById(id);
+        if (!article) {
+            return res.json({ code: 1, message: '文章不存在' });
+        }
+
+        // 更新公开状态
+        article.isPublic = isPublic;
+        await article.save();
+
+        res.json({ code: 0, message: '更新成功' });
+    } catch (err) {
+        console.error('切换文章公开状态失败:', err);
+        res.json({ code: 1, message: '服务器错误' });
     }
 });
 

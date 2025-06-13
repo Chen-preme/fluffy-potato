@@ -41,9 +41,9 @@ $(function(){
   });
 
   $registerBox.find('button').on('click',()=>{
-      const username = $('#username').val();
-      const password = $('#password').val();
-      const repassword = $('#repassword').val();
+      const username = $('#reg_username').val();
+      const password = $('#reg_password').val();
+      const repassword = $('#reg_repassword').val();
       console.log('注册表单数据:', { username, password, repassword }); // 调试用
 
       $.ajax({

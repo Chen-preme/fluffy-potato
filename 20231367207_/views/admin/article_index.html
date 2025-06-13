@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<%- include('./comp_head.html') %>
+<body>
+    <%- include('./comp_nav.html') %>
+    <%- include('./comp_sidebar.html') %>
+    
+    <!-- 主内容区 -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">文章管理</h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addArticleModal">
+                    <i class="fa fa-plus"></i> 添加文章
+                </button>
+            </div>
+        </div>
+
+        <!-- 文章列表 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">文章列表</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>标题</th>
+                                <th>作者</th>
+                                <th>分类</th>
+                                <th>状态</th>
+                                <th>创建时间</th>
+                                <th>更新时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="articleList">
+                            <% if (articles && articles.length > 0) { %>
+                                <% articles.forEach(function(article, index) { %>
+                                <tr>
+                                    <td><%= (currentPage - 1) * pageSize + index + 1 %></td>
+                                    <td>
+                                        <% if (article.isTop) { %>
+                                            <span class="badge bg-danger me-1">置顶</span>
+                                        <% } %>
+                                        <%= article.title %>
+                                    </td>
+                                    <td><%= article.author %></td>
+                                    <td><%= article.category ? article.category.name : '未分类' %></td>
+                                    <td>
+                                        <% if (article.isPublic) { %>
+                                            <span class="badge bg-success">公开</span>
+                                        <% } else { %>
+                                            <span class="badge bg-secondary">私密</span>
+                                        <% } %>
+                                    </td>
+                                    <td><%= new Date(article.createTime).toLocaleString() %></td>
+                                    <td><%= new Date(article.updateTime).toLocaleString() %></td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-primary toggle-top" data-id="<%= article._id %>" data-is-top="<%= article.isTop %>">
+                                                <i class="fa <%= article.isTop ? 'fa-arrow-down' : 'fa-arrow-up' %>"></i> <%= article.isTop ? '取消置顶' : '置顶' %>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-info toggle-public" data-id="<%= article._id %>" data-is-public="<%= article.isPublic %>">
+                                                <i class="fa <%= article.isPublic ? 'fa-lock' : 'fa-unlock' %>"></i> <%= article.isPublic ? '设为私密' : '设为公开' %>
+                                            </button>
+                                            <button class="btn btn-sm btn-primary edit-article" data-id="<%= article._id %>" data-bs-toggle="modal" data-bs-target="#editArticleModal">
+                                                <i class="fa fa-edit"></i> 编辑
+                                            </button>
+                                            <button class="btn btn-sm btn-danger delete-article" data-id="<%= article._id %>" data-title="<%= article.title %>" data-bs-toggle="modal" data-bs-target="#deleteArticleModal">
+                                                <i class="fa fa-trash"></i> 删除
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="8" class="text-center">暂无文章数据</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 分页 -->
+                <% if (totalPages > 1) { %>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                            <a class="page-link" href="/admin/articles?page=<%= currentPage - 1 %>" tabindex="-1" aria-disabled="<%= currentPage === 1 ? 'true' : 'false' %>">上一页</a>
+                        </li>
+                        <% for (let i = 1; i <= totalPages; i++) { %>
+                            <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                <a class="page-link" href="/admin/articles?page=<%= i %>"><%= i %></a>
+                            </li>
+                        <% } %>
+                        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                            <a class="page-link" href="/admin/articles?page=<%= currentPage + 1 %>" aria-disabled="<%= currentPage === totalPages ? 'true' : 'false' %>">下一页</a>
+                        </li>
+                    </ul>
+                </nav>
+                <% } %>
+            </div>
+        </div>
+    </main>
+    </div>
+    </div>
+
+    <!-- 添加文章模态框 -->
+    <div class="modal fade" id="addArticleModal" tabindex="-1" aria-labelledby="addArticleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addArticleModalLabel">添加文章</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addArticleForm">
+                        <div class="mb-3">
+                            <label for="articleTitle" class="form-label">文章标题</label>
+                            <input type="text" class="form-control" id="articleTitle" required>
+                            <div class="invalid-feedback">请输入文章标题</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="articleCategory" class="form-label">文章分类</label>
+                            <select class="form-select" id="articleCategory" required>
+                                <option value="">请选择分类</option>
+                                <% if (categories && categories.length > 0) { %>
+                                    <% categories.forEach(function(category) { %>
+                                        <option value="<%= category._id %>"><%= category.name %></option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                            <div class="invalid-feedback">请选择文章分类</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="articleContent" class="form-label">文章内容</label>
+                            <textarea class="form-control" id="articleContent" rows="10" required></textarea>
+                            <div class="invalid-feedback">请输入文章内容</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="articleIsTop">
+                                    <label class="form-check-label" for="articleIsTop">
+                                        置顶文章
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="articleIsPublic" checked>
+                                    <label class="form-check-label" for="articleIsPublic">
+                                        公开文章
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveArticle">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑文章模态框 -->
+    <div class="modal fade" id="editArticleModal" tabindex="-1" aria-labelledby="editArticleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editArticleModalLabel">编辑文章</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editArticleForm">
+                        <input type="hidden" id="editArticleId">
+                        <div class="mb-3">
+                            <label for="editArticleTitle" class="form-label">文章标题</label>
+                            <input type="text" class="form-control" id="editArticleTitle" required>
+                            <div class="invalid-feedback">请输入文章标题</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editArticleCategory" class="form-label">文章分类</label>
+                            <select class="form-select" id="editArticleCategory" required>
+                                <option value="">请选择分类</option>
+                                <% if (categories && categories.length > 0) { %>
+                                    <% categories.forEach(function(category) { %>
+                                        <option value="<%= category._id %>"><%= category.name %></option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                            <div class="invalid-feedback">请选择文章分类</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editArticleContent" class="form-label">文章内容</label>
+                            <textarea class="form-control" id="editArticleContent" rows="10" required></textarea>
+                            <div class="invalid-feedback">请输入文章内容</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="editArticleIsTop">
+                                    <label class="form-check-label" for="editArticleIsTop">
+                                        置顶文章
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="editArticleIsPublic">
+                                    <label class="form-check-label" for="editArticleIsPublic">
+                                        公开文章
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="updateArticle">更新</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除文章确认模态框 -->
+    <div class="modal fade" id="deleteArticleModal" tabindex="-1" aria-labelledby="deleteArticleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteArticleModalLabel">确认删除</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>确定要删除文章 <span id="deleteArticleTitle" class="fw-bold"></span> 吗？</p>
+                    <p class="text-danger">注意：删除后将无法恢复。</p>
+                    <input type="hidden" id="deleteArticleId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteArticle">确认删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('./comp_footer.html') %>
+    <script src="/public/js/article.js"></script>
+</body>
+</html>
