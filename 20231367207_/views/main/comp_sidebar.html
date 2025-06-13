@@ -7,7 +7,18 @@
             <% if (userInfo.isAdmin) { %>
                 <p class="colDanger">你好，你是管理员，<a href="/admin">你可以点击这里进入管理</a></p>
             <% } %>
+            <p><span class="colDark"><a href="javascript:void(0)" id="changePasswordLink">修改密码</a></span></p>
             <p><span class="colDark"><a href="javascript:void(0)" id="logoutBtn">退出</a></span></p>
+        </div>
+        
+        <!-- 修改密码表单，默认隐藏 -->
+        <div class="rightBox" id="changePasswordBox" style="display: none;">
+            <div class="title"><span>修改密码</span></div>
+            <div class="line"><span class="colDark">原密码：</span><input id="oldPassword" type="password" /></div>
+            <div class="line"><span class="colDark">新密码：</span><input id="newPassword" type="password" /></div>
+            <div class="line"><span class="colDark">确认密码：</span><input id="confirmPassword" type="password" /></div>
+            <div class="line"><span class="colDark"></span><button id="changePasswordBtn">确认修改</button></div>
+            <p class="colWarning textCenter" id="changePasswordMsg"></p>
         </div>
     <% } else { %>
         <!-- 未登录，显示登录框 -->

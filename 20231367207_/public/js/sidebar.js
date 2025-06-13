@@ -2,6 +2,7 @@ $(function(){
   const $loginBox = $('#loginBox');
   const $registerBox = $('#registerBox');
   const $userInfo = $('#userInfo');
+  const $changePasswordBox = $('#changePasswordBox');
 
      //刷新状态维持
     //  $.get('/api/user/info', function (res) {
@@ -94,6 +95,63 @@ $(function(){
     if (res.code === 0) {
       alert(res.msg); // 可选提示：已退出
       location.reload(); // 刷新页面，重新进入未登录状态
+    }
+  });
+});
+
+// 修改密码链接点击事件
+$('#changePasswordLink').on('click', function() {
+  // 清空表单和消息
+  $('#oldPassword').val('');
+  $('#newPassword').val('');
+  $('#confirmPassword').val('');
+  $('#changePasswordMsg').html('');
+  
+  // 显示修改密码框
+  $changePasswordBox.show();
+});
+
+// 修改密码按钮点击事件
+$('#changePasswordBtn').on('click', function() {
+  const oldPassword = $('#oldPassword').val();
+  const newPassword = $('#newPassword').val();
+  const confirmPassword = $('#confirmPassword').val();
+  
+  // 简单的前端验证
+  if (!oldPassword || !newPassword || !confirmPassword) {
+    $('#changePasswordMsg').html('所有密码字段都不能为空');
+    return;
+  }
+  
+  if (newPassword !== confirmPassword) {
+    $('#changePasswordMsg').html('新密码与确认密码不一致');
+    return;
+  }
+  
+  // 发送修改密码请求
+  $.ajax({
+    type: 'POST',
+    url: '/api/user/change-password',
+    contentType: 'application/json',
+    data: JSON.stringify({
+      oldPassword: oldPassword,
+      newPassword: newPassword,
+      confirmPassword: confirmPassword
+    }),
+    dataType: 'json',
+    success: function(res) {
+      $('#changePasswordMsg').html(res.msg);
+      
+      if (res.code === 0) {
+        // 密码修改成功，3秒后隐藏修改密码框
+        setTimeout(function() {
+          $changePasswordBox.hide();
+        }, 3000);
+      }
+    },
+    error: function(xhr) {
+      $('#changePasswordMsg').html('请求失败，请稍后再试');
+      console.error('修改密码请求失败:', xhr.status, xhr.responseText);
     }
   });
 });

@@ -4,6 +4,8 @@ const router = express.Router();
 const User = require('../models/user');
 const Category = require('../models/category');
 const Article = require('../models/article');
+const Comment = require('../models/comment');
+const Friendlink = require('../models/friendlink');
 // 管理员权限检查中间件
 router.use(function(req, res, next) {
     if (!req.userInfo || !req.userInfo.isAdmin) { // 增加对 req.userInfo 存在的检查
@@ -560,6 +562,278 @@ router.post('/article/toggle-public', async (req, res) => {
     } catch (err) {
         console.error('切换文章公开状态失败:', err);
         res.json({ code: 1, message: '服务器错误' });
+    }
+});
+
+
+
+
+
+// 评论管理路由
+router.get('/comments', async (req, res) => {
+    try {
+        // 获取当前页码，默认为第1页
+        const currentPage = parseInt(req.query.page) || 1;
+        // 每页显示的评论数量
+        const pageSize = 10;
+        // 计算跳过的文档数量
+        const skip = (currentPage - 1) * pageSize;
+
+        // 获取评论总数
+        const totalComments = await Comment.countDocuments({});
+        // 计算总页数
+        const totalPages = Math.ceil(totalComments / pageSize);
+
+        // 从数据库中查询评论，添加分页，并关联文章信息
+        const comments = await Comment.find({})
+            .populate('articleId', 'title')
+            .sort({ createTime: -1 })
+            .skip(skip)
+            .limit(pageSize);
+
+        res.render('admin/comment_index.html', {
+            title: '评论管理',
+            userInfo: req.userInfo,
+            comments: comments,
+            currentPage: currentPage,
+            totalPages: totalPages,
+            pageSize: pageSize,
+            totalComments: totalComments
+        });
+
+    } catch (err) {
+        console.error('获取评论列表失败:', err);
+        res.status(500).send('服务器错误，无法获取评论列表。');
+    }
+});
+
+// 删除评论
+router.post('/comment/delete', async (req, res) => {
+    try {
+        const { id } = req.body;
+        
+        // 验证必填字段
+        if (!id) {
+            return res.json({ code: 1, message: '评论ID不能为空' });
+        }
+        
+        // 查找评论
+        const comment = await Comment.findById(id);
+        if (!comment) {
+            return res.json({ code: 1, message: '评论不存在' });
+        }
+        
+        // 删除评论
+        await Comment.findByIdAndDelete(id);
+        
+        res.json({ code: 0, message: '评论删除成功' });
+    } catch (err) {
+        console.error('删除评论失败:', err);
+        res.json({ code: 1, message: '服务器错误，删除评论失败' });
+    }
+});
+
+
+// 友情链接管理路由
+
+// 获取友情链接列表
+router.get('/friendlinks', async (req, res) => {
+    try {
+        // 获取分页参数
+        const page = parseInt(req.query.page) || 1;
+        const pageSize = 10;
+        const skip = (page - 1) * pageSize;
+        
+        // 查询友情链接总数
+        const totalFriendlinks = await Friendlink.countDocuments();
+        
+        // 查询当前页的友情链接，按排序字段排序
+        const friendlinks = await Friendlink.find()
+            .sort({ order: 1 })
+            .skip(skip)
+            .limit(pageSize);
+        
+        // 计算总页数
+        const totalPages = Math.ceil(totalFriendlinks / pageSize);
+        
+        // 渲染友情链接管理页面
+        res.render('admin/friendlink_index', {
+            title: '友情链接管理',
+            userInfo: req.userInfo,
+            friendlinks: friendlinks,
+            currentPage: page,
+            pageSize: pageSize,
+            totalPages: totalPages,
+            totalFriendlinks: totalFriendlinks
+        });
+    } catch (err) {
+        console.error('获取友情链接列表失败:', err);
+        res.status(500).send('服务器错误，无法获取友情链接列表。');
+    }
+});
+
+// 添加友情链接
+router.post('/friendlink/add', async (req, res) => {
+    try {
+        const { name, url, description } = req.body;
+        
+        // 验证必填字段
+        if (!name) {
+            return res.json({ success: false, message: '友情链接名称不能为空' });
+        }
+        
+        if (!url) {
+            return res.json({ success: false, message: 'URL不能为空' });
+        }
+        
+        // 检查名称是否已存在
+        const existingFriendlink = await Friendlink.findOne({ name });
+        if (existingFriendlink) {
+            return res.json({ success: false, message: '该友情链接名称已存在' });
+        }
+        
+        // 获取当前最大排序值
+        const maxOrderFriendlink = await Friendlink.findOne().sort({ order: -1 });
+        const nextOrder = maxOrderFriendlink ? maxOrderFriendlink.order + 1 : 1;
+        
+        // 创建新友情链接
+        const newFriendlink = new Friendlink({
+            name,
+            url,
+            description,
+            order: nextOrder,
+            createTime: new Date()
+        });
+        
+        await newFriendlink.save();
+        
+        res.json({ success: true, message: '友情链接添加成功' });
+    } catch (err) {
+        console.error('添加友情链接失败:', err);
+        res.json({ success: false, message: '服务器错误，添加友情链接失败' });
+    }
+});
+
+// 更新友情链接
+router.post('/friendlink/update', async (req, res) => {
+    try {
+        const { id, name, url, description } = req.body;
+        
+        // 验证必填字段
+        if (!id) {
+            return res.json({ success: false, message: '友情链接ID不能为空' });
+        }
+        
+        if (!name) {
+            return res.json({ success: false, message: '友情链接名称不能为空' });
+        }
+        
+        if (!url) {
+            return res.json({ success: false, message: 'URL不能为空' });
+        }
+        
+        // 查找友情链接
+        const friendlink = await Friendlink.findById(id);
+        if (!friendlink) {
+            return res.json({ success: false, message: '友情链接不存在' });
+        }
+        
+        // 检查名称是否已被其他友情链接使用
+        const existingFriendlink = await Friendlink.findOne({ name, _id: { $ne: id } });
+        if (existingFriendlink) {
+            return res.json({ success: false, message: '该友情链接名称已存在' });
+        }
+        
+        // 更新友情链接
+        friendlink.name = name;
+        friendlink.url = url;
+        friendlink.description = description;
+        
+        await friendlink.save();
+        
+        res.json({ success: true, message: '友情链接更新成功' });
+    } catch (err) {
+        console.error('更新友情链接失败:', err);
+        res.json({ success: false, message: '服务器错误，更新友情链接失败' });
+    }
+});
+
+// 删除友情链接
+router.post('/friendlink/delete', async (req, res) => {
+    try {
+        const { id } = req.body;
+        
+        // 验证必填字段
+        if (!id) {
+            return res.json({ success: false, message: '友情链接ID不能为空' });
+        }
+        
+        // 查找友情链接
+        const friendlink = await Friendlink.findById(id);
+        if (!friendlink) {
+            return res.json({ success: false, message: '友情链接不存在' });
+        }
+        
+        // 删除友情链接
+        await Friendlink.findByIdAndDelete(id);
+        
+        res.json({ success: true, message: '友情链接删除成功' });
+    } catch (err) {
+        console.error('删除友情链接失败:', err);
+        res.json({ success: false, message: '服务器错误，删除友情链接失败' });
+    }
+});
+
+// 改变友情链接排序
+router.post('/friendlink/change-order', async (req, res) => {
+    try {
+        const { id, direction } = req.body;
+        
+        // 验证必填字段
+        if (!id || !direction) {
+            return res.json({ success: false, message: '参数不完整' });
+        }
+        
+        // 查找当前友情链接
+        const currentFriendlink = await Friendlink.findById(id);
+        if (!currentFriendlink) {
+            return res.json({ success: false, message: '友情链接不存在' });
+        }
+        
+        let targetFriendlink;
+        
+        if (direction === 'up') {
+            // 查找上一个友情链接（order值更小的）
+            targetFriendlink = await Friendlink.findOne({
+                order: { $lt: currentFriendlink.order }
+            }).sort({ order: -1 });
+        } else if (direction === 'down') {
+            // 查找下一个友情链接（order值更大的）
+            targetFriendlink = await Friendlink.findOne({
+                order: { $gt: currentFriendlink.order }
+            }).sort({ order: 1 });
+        } else {
+            return res.json({ success: false, message: '无效的方向参数' });
+        }
+        
+        // 如果没有找到目标友情链接，说明已经是最上或最下
+        if (!targetFriendlink) {
+            return res.json({ success: false, message: `已经是最${direction === 'up' ? '上' : '下'}面了` });
+        }
+        
+        // 交换两个友情链接的order值
+        const tempOrder = currentFriendlink.order;
+        currentFriendlink.order = targetFriendlink.order;
+        targetFriendlink.order = tempOrder;
+        
+        // 保存更改
+        await currentFriendlink.save();
+        await targetFriendlink.save();
+        
+        res.json({ success: true, message: '排序更改成功' });
+    } catch (err) {
+        console.error('更改友情链接排序失败:', err);
+        res.json({ success: false, message: '服务器错误，更改排序失败' });
     }
 });
 

@@ -113,5 +113,49 @@ router.get('/user/logout', (req, res) => {
   });
 });
 
+// 修改密码
+router.post('/user/change-password', async (req, res) => {
+  // 检查用户是否登录
+  if (!req.session.user) {
+    return res.json({ code: 1, msg: '未登录' });
+  }
+
+  const { oldPassword, newPassword, confirmPassword } = req.body;
+
+  // 验证输入
+  if (!oldPassword || !newPassword || !confirmPassword) {
+    return res.json({ code: 2, msg: '所有密码字段都不能为空' });
+  }
+
+  if (newPassword !== confirmPassword) {
+    return res.json({ code: 3, msg: '新密码与确认密码不一致' });
+  }
+
+  try {
+    // 获取用户信息
+    const user = await User.findById(req.session.user._id);
+    if (!user) {
+      return res.json({ code: 4, msg: '用户不存在' });
+    }
+
+    // 验证原密码
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.json({ code: 5, msg: '原密码不正确' });
+    }
+
+    // 加密新密码
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // 更新密码
+    user.password = hashedPassword;
+    await user.save();
+
+    return res.json({ code: 0, msg: '密码修改成功' });
+  } catch (err) {
+    console.error('修改密码异常:', err);
+    return res.status(500).json({ code: 500, msg: '服务器内部错误' });
+  }
+});
 
 module.exports = router;

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<%- include('./comp_head.html') %>
+<body>
+    <%- include('./comp_nav.html') %>
+    <%- include('./comp_sidebar.html') %>
+    
+    <!-- 主内容区 -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">友情链接管理</h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addFriendlinkModal">
+                    <i class="fa fa-plus"></i> 添加友情链接
+                </button>
+            </div>
+        </div>
+
+        <!-- 友情链接列表 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">友情链接列表</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>名称</th>
+                                <th>URL</th>
+                                <th>描述</th>
+                                <th>排序</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="friendlinkList">
+                            <% if (friendlinks && friendlinks.length > 0) { %>
+                                <% friendlinks.forEach(function(friendlink, index) { %>
+                                <tr>
+                                    <td><%= (currentPage - 1) * pageSize + index + 1 %></td>
+                                    <td><%= friendlink.name %></td>
+                                    <td><a href="<%= friendlink.url %>" target="_blank"><%= friendlink.url %></a></td>
+                                    <td><%= friendlink.description %></td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-outline-secondary move-up" data-id="<%= friendlink._id %>" <% if (index === 0) { %>disabled<% } %>>
+                                                <i class="fa fa-arrow-up"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary move-down" data-id="<%= friendlink._id %>" <% if (index === friendlinks.length - 1) { %>disabled<% } %>>
+                                                <i class="fa fa-arrow-down"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td><%= new Date(friendlink.createTime).toLocaleString() %></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary edit-friendlink" data-id="<%= friendlink._id %>" data-name="<%= friendlink.name %>" data-url="<%= friendlink.url %>" data-description="<%= friendlink.description %>" data-bs-toggle="modal" data-bs-target="#editFriendlinkModal">
+                                            <i class="fa fa-edit"></i> 编辑
+                                        </button>
+                                        <button class="btn btn-sm btn-danger delete-friendlink" data-id="<%= friendlink._id %>" data-name="<%= friendlink.name %>" data-bs-toggle="modal" data-bs-target="#deleteFriendlinkModal">
+                                            <i class="fa fa-trash"></i> 删除
+                                        </button>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center">暂无友情链接数据</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 分页 -->
+                <% if (totalPages > 1) { %>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                            <a class="page-link" href="/admin/friendlinks?page=<%= currentPage - 1 %>" tabindex="-1" aria-disabled="<%= currentPage === 1 ? 'true' : 'false' %>">上一页</a>
+                        </li>
+                        <% for (let i = 1; i <= totalPages; i++) { %>
+                            <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                <a class="page-link" href="/admin/friendlinks?page=<%= i %>"><%= i %></a>
+                            </li>
+                        <% } %>
+                        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                            <a class="page-link" href="/admin/friendlinks?page=<%= currentPage + 1 %>" aria-disabled="<%= currentPage === totalPages ? 'true' : 'false' %>">下一页</a>
+                        </li>
+                    </ul>
+                </nav>
+                <% } %>
+            </div>
+        </div>
+    </main>
+    </div>
+    </div>
+
+    <!-- 添加友情链接模态框 -->
+    <div class="modal fade" id="addFriendlinkModal" tabindex="-1" aria-labelledby="addFriendlinkModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addFriendlinkModalLabel">添加友情链接</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addFriendlinkForm">
+                        <div class="mb-3">
+                            <label for="friendlinkName" class="form-label">名称</label>
+                            <input type="text" class="form-control" id="friendlinkName" required>
+                            <div class="invalid-feedback">请输入友情链接名称</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="friendlinkUrl" class="form-label">URL</label>
+                            <input type="url" class="form-control" id="friendlinkUrl" required>
+                            <div class="invalid-feedback">请输入有效的URL</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="friendlinkDescription" class="form-label">描述</label>
+                            <textarea class="form-control" id="friendlinkDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveFriendlink">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑友情链接模态框 -->
+    <div class="modal fade" id="editFriendlinkModal" tabindex="-1" aria-labelledby="editFriendlinkModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editFriendlinkModalLabel">编辑友情链接</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editFriendlinkForm">
+                        <input type="hidden" id="editFriendlinkId">
+                        <div class="mb-3">
+                            <label for="editFriendlinkName" class="form-label">名称</label>
+                            <input type="text" class="form-control" id="editFriendlinkName" required>
+                            <div class="invalid-feedback">请输入友情链接名称</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editFriendlinkUrl" class="form-label">URL</label>
+                            <input type="url" class="form-control" id="editFriendlinkUrl" required>
+                            <div class="invalid-feedback">请输入有效的URL</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editFriendlinkDescription" class="form-label">描述</label>
+                            <textarea class="form-control" id="editFriendlinkDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="updateFriendlink">更新</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除友情链接确认模态框 -->
+    <div class="modal fade" id="deleteFriendlinkModal" tabindex="-1" aria-labelledby="deleteFriendlinkModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteFriendlinkModalLabel">确认删除</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>确定要删除友情链接 <span id="deleteFriendlinkName" class="fw-bold"></span> 吗？</p>
+                    <input type="hidden" id="deleteFriendlinkId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteFriendlink">确认删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('./comp_footer.html') %>
+    <script src="/public/js/friendlink.js"></script>
+</body>
+</html>
