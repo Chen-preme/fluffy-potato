@@ -1,61 +1,112 @@
-const userId = window.currentUserId || ''; // 当前登录用户ID，后端模板传过来
+/**
+ * 后台管理系统的主要JavaScript功能
+ */
 
-function loadComments() {
-  $.get(`/api/comment/list/${articleId}`, function (res) {
-    if (res.code === 0) {
-      const list = res.comments;
-      $('#messageCount').text(list.length);
+// 当文档加载完成后执行
+$(document).ready(function() {
+    // 初始化用户管理页面功能
+    initUserManagement();
+});
 
-      let html = '';
-      list.forEach(c => {
-        html += `
-        <div class="messageBox" data-id="${c._id}">
-          <p class="name clear">
-            <span class="fl">${c.username}</span>
-            <span class="fr">${formatTime(c.createTime)}</span>
-          </p>
-          <p class="content">${c.content}</p>
-          ${c.userId === userId ? `
-          <p class="textRight">
-            <button class="editBtn">编辑</button>
-            <button class="deleteBtn">删除</button>
-          </p>` : ''}
-        </div>`;
-      });
-
-      $('#commentList').html(html);
+/**
+ * 初始化用户管理页面的功能
+ */
+function initUserManagement() {
+    // 只在用户管理页面执行
+    if (window.location.pathname.includes('/admin/users')) {
+        // 重置密码功能
+        initPasswordReset();
+        
+        // 冻结/解冻用户功能
+        initUserFreeze();
     }
-  });
 }
 
-// 编辑按钮事件
-$('#commentList').on('click', '.editBtn', function () {
-  const $box = $(this).closest('.messageBox');
-  const id = $box.data('id');
-  const oldContent = $box.find('.content').text();
-
-  const newContent = prompt('修改评论：', oldContent);
-  if (newContent && newContent !== oldContent) {
-    $.post(`/api/comment/update/${id}`, { content: newContent }, function (res) {
-      if (res.code === 0) {
-        loadComments();
-      } else {
-        alert(res.msg);
-      }
+/**
+ * 初始化密码重置功能
+ */
+function initPasswordReset() {
+    // 点击重置密码按钮时，填充模态框数据
+    $('.edit-user').on('click', function() {
+        const userId = $(this).data('id');
+        const username = $(this).closest('tr').find('td:nth-child(2)').text();
+        
+        $('#editUserId').val(userId);
+        $('#editUsername').val(username);
+        $('#newPassword').val('');
+        $('#confirmPassword').val('');
     });
-  }
-});
-
-// 删除按钮事件
-$('#commentList').on('click', '.deleteBtn', function () {
-  const id = $(this).closest('.messageBox').data('id');
-  if (confirm('确认删除该评论？')) {
-    $.post(`/api/comment/delete/${id}`, function (res) {
-      if (res.code === 0) {
-        loadComments();
-      } else {
-        alert(res.msg);
-      }
+    
+    // 点击保存按钮时，提交重置密码请求
+    $('#savePasswordBtn').on('click', function() {
+        const userId = $('#editUserId').val();
+        const newPassword = $('#newPassword').val();
+        const confirmPassword = $('#confirmPassword').val();
+        
+        // 验证密码
+        if (!newPassword) {
+            alert('请输入新密码');
+            return;
+        }
+        
+        if (newPassword !== confirmPassword) {
+            alert('两次输入的密码不一致');
+            return;
+        }
+        
+        // 发送请求重置密码
+        $.ajax({
+            url: '/admin/user/reset-password',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ userId, newPassword }),
+            success: function(data) {
+                if (data.success) {
+                    alert(data.message);
+                    // 关闭模态框
+                    $('#editUserModal').modal('hide');
+                } else {
+                    alert(data.message);
+                }
+            },
+            error: function(error) {
+                console.error('重置密码出错:', error);
+                alert('重置密码失败，请重试');
+            }
+        });
     });
-  }
-});
+}
+
+/**
+ * 初始化用户冻结/解冻功能
+ */
+function initUserFreeze() {
+    // 冻结/解冻用户按钮点击事件
+    $('.freeze-user, .unfreeze-user').on('click', function() {
+        const userId = $(this).data('id');
+        const action = $(this).hasClass('freeze-user') ? '冻结' : '解冻';
+        
+        if (confirm(`确定要${action}此用户吗？`)) {
+            // 发送请求切换用户状态
+            $.ajax({
+                url: '/admin/user/toggle-freeze',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ userId }),
+                success: function(data) {
+                    if (data.success) {
+                        alert(data.message);
+                        // 刷新页面以显示更新后的状态
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                },
+                error: function(error) {
+                    console.error('操作失败:', error);
+                    alert('操作失败，请重试');
+                }
+            });
+        }
+    });
+}

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<%- include('./comp_head.html') %>
+<body>
+    <%- include('./comp_nav.html') %>
+    <%- include('./comp_sidebar.html') %>
+    
+    <!-- 主内容区 -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">用户管理</h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    <i class="fa fa-plus"></i> 添加用户
+                </button>
+            </div>
+        </div>
+
+        <!-- 用户列表 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="card-title mb-0">用户列表</h5>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="搜索用户..." id="searchUser">
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="fa fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>用户名</th>
+                                <th>密码</th>
+                                <th>管理员</th>
+                                <th>状态</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% users.forEach(function(user, index) { %>
+                            <tr>
+                                <td><%= index + 1 %></td>
+                                <td><%= user.username %></td>
+                                <td>******</td>
+                                <td>
+                                    <% if(user.isAdmin) { %>
+                                    <span class="badge bg-success">是</span>
+                                    <% } else { %>
+                                    <span class="badge bg-secondary">否</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if(user.isFrozen) { %>
+                                    <span class="badge bg-danger">已冻结</span>
+                                    <% } else { %>
+                                    <span class="badge bg-success">正常</span>
+                                    <% } %>
+                                </td>
+                                <td><%= new Date(user.createTime).toLocaleString() %></td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary edit-user" data-id="<%= user._id %>" data-bs-toggle="modal" data-bs-target="#editUserModal">
+                                        <i class="fa fa-edit"></i> 重置密码
+                                    </button>
+                                    <% if(user.isFrozen) { %>
+                                    <button class="btn btn-sm btn-success unfreeze-user" data-id="<%= user._id %>">
+                                        <i class="fa fa-unlock"></i> 解冻
+                                    </button>
+                                    <% } else { %>
+                                    <button class="btn btn-sm btn-warning freeze-user" data-id="<%= user._id %>">
+                                        <i class="fa fa-lock"></i> 冻结
+                                    </button>
+                                    <% } %>
+                                    <button class="btn btn-sm btn-danger delete-user" data-id="<%= user._id %>" data-bs-toggle="modal" data-bs-target="#deleteUserModal">
+                                        <i class="fa fa-trash"></i> 删除
+                                    </button>
+                                </td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 分页导航 -->
+                <div class="pagination-container mt-4">
+                    <nav aria-label="用户列表分页">
+                        <ul class="pagination justify-content-center">
+                            <!-- 上一页按钮 -->
+                            <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                                <a class="page-link" href="/admin/users?page=<%= currentPage - 1 %>" aria-label="上一页">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            
+                            <!-- 页码按钮 -->
+                            <% for(let i = 1; i <= totalPages; i++) { %>
+                                <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                    <a class="page-link" href="/admin/users?page=<%= i %>"><%= i %></a>
+                                </li>
+                            <% } %>
+                            
+                            <!-- 下一页按钮 -->
+                            <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                                <a class="page-link" href="/admin/users?page=<%= currentPage + 1 %>" aria-label="下一页">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    
+                    <!-- 分页信息 -->
+                    <div class="text-center mt-2">
+                        <small class="text-muted">
+                            显示 <%= (currentPage - 1) * pageSize + 1 %> 到 <%= Math.min(currentPage * pageSize, totalUsers) %> 条，共 <%= totalUsers %> 条记录 (共 <%= totalPages %> 页)
+                        </small>
+                    </div>
+                </div>
+                
+                <%- include('./comp_footer.html') %>
+            </div>
+        </div>
+    </main>
+    
+    <!-- 重置密码模态框 -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editUserModalLabel">重置用户密码</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="resetPasswordForm">
+                        <input type="hidden" id="editUserId" name="userId">
+                        <div class="mb-3">
+                            <label for="editUsername" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="editUsername" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">新密码</label>
+                            <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">确认密码</label>
+                            <input type="password" class="form-control" id="confirmPassword" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="savePasswordBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 删除用户确认模态框 -->
+    <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteUserModalLabel">确认删除</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>确定要删除此用户吗？此操作不可逆。</p>
+                    <input type="hidden" id="deleteUserId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 引入主要JavaScript文件 -->
+    <script src="/public/js/main.js"></script>
+</body>
+</html>
