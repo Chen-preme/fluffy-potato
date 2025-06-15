@@ -2,6 +2,9 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const router = express.Router();
 const User = require('../models/user');
+const Article = require('../models/article');
+const Comment = require('../models/comment');
+const Favorite = require('../models/favorite');
 
 const session = require('express-session');
 
@@ -154,6 +157,90 @@ router.post('/user/change-password', async (req, res) => {
     return res.json({ code: 0, msg: '密码修改成功' });
   } catch (err) {
     console.error('修改密码异常:', err);
+    return res.status(500).json({ code: 500, msg: '服务器内部错误' });
+  }
+});
+
+// 评论相关API
+
+// 获取文章评论
+router.get('/comments', async (req, res) => {
+  try {
+    const { articleId, page = 1, limit = 10 } = req.query;
+    
+    if (!articleId) {
+      return res.json({ code: 1, msg: '文章ID不能为空' });
+    }
+    
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    // 查询评论总数
+    const total = await Comment.countDocuments({ articleId });
+    
+    // 查询评论列表
+    const comments = await Comment.find({ articleId })
+      .sort({ createTime: -1 }) // 按时间倒序
+      .skip(skip)
+      .limit(parseInt(limit));
+    
+    // 计算总页数
+    const pages = Math.ceil(total / parseInt(limit));
+    
+    return res.json({
+      code: 0,
+      data: {
+        comments,
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          pages
+        }
+      }
+    });
+  } catch (err) {
+    console.error('获取评论失败:', err);
+    return res.status(500).json({ code: 500, msg: '服务器内部错误' });
+  }
+});
+
+// 获取多篇文章的评论计数
+router.get('/comments/count', async (req, res) => {
+  try {
+    const { articleIds } = req.query;
+    
+    if (!articleIds) {
+      return res.json({ code: 1, msg: '文章ID不能为空' });
+    }
+    
+    // 将逗号分隔的文章ID转换为数组
+    const ids = articleIds.split(',');
+    
+    // 查询每篇文章的评论数
+    const counts = {};
+    
+    // 使用聚合查询批量获取评论计数
+    const result = await Comment.aggregate([
+      { $match: { articleId: { $in: ids.map(id => mongoose.Types.ObjectId(id)) } } },
+      { $group: { _id: '$articleId', count: { $sum: 1 } } }
+    ]);
+    
+    // 初始化所有文章的评论数为0
+    ids.forEach(id => {
+      counts[id] = 0;
+    });
+    
+    // 更新有评论的文章的计数
+    result.forEach(item => {
+      counts[item._id] = item.count;
+    });
+    
+    return res.json({
+      code: 0,
+      data: counts
+    });
+  } catch (err) {
+    console.error('获取评论计数失败:', err);
     return res.status(500).json({ code: 500, msg: '服务器内部错误' });
   }
 });

@@ -10,7 +10,8 @@ const articleSchema = new mongoose.Schema({
     required: true
   },
   author: {
-    type: String, // 或 userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
   category: {
@@ -33,6 +34,10 @@ const articleSchema = new mongoose.Schema({
   updateTime: {
     type: Date,
     default: Date.now
+  },
+  views: {
+    type: Number,
+    default: 0
   }
 });
 

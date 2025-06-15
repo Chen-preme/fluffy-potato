@@ -397,7 +397,7 @@ router.post('/article/add', async (req, res) => {
             title: title.trim(),
             content: content.trim(),
             category: categoryId,
-            author: req.userInfo.username, // 使用当前登录用户作为作者
+            author: req.userInfo._id, // 使用当前登录用户的ID作为作者
             isTop: isTop === 'true' || isTop === true ? true : false,
             isPublic: isPublic === 'false' || isPublic === false ? false : true
         });

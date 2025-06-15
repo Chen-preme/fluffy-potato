@@ -1,6 +1,7 @@
 <nav>
     <div class="menu">
         <a href="/" class="focus">首页</a>
+        <a href="/detail" id="detailLink">详情页</a>
         
             <a href="/578d0a391b82d423481b6930">HTML5</a>
         
@@ -14,5 +15,12 @@
         
             <a href="/57921998f925118da88ea826">Express</a>
         
+        <% if (userInfo) { %>
+            <a href="/favorites"><i class="fa fa-star"></i> 我的收藏</a>
+        <% } %>
     </div>
 </nav>
+
+
+
+

@@ -13,44 +13,55 @@
     <main class="clear">
         <div class="mainLeft">
             
-            <div class="listBox">
-                <h1>symfony2</h1>
+            <% if (article) { %>
+            <div class="listBox" id="articleData" data-article-id="<%= article._id %>">
+                <h1><%= article.title %></h1>
                 <p class="colDefault">
-                    作者：<span class="colInfo">admin</span> -
-                    时间：<span class="colInfo">2020年09月28日 01:13:30</span> -
-                    阅读：<span class="colInfo">0</span> -
-                    评论：<span class="colInfo">10</span>
+                    作者：<span class="colInfo"><%= article.author ? article.author.username : '未知' %></span> -
+                    时间：<span class="colInfo"><%= new Date(article.createTime).toLocaleString('zh-CN', {year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric'}) %></span> -
+                    阅读：<span class="colInfo"><%= article.views || 0 %></span> -
+                    评论：<span class="colInfo" id="totalComments">0</span>
                 </p>
                 <dfn>
-                    内容内容内容
+                    <%- article.content %>
                 </dfn>
             </div>
+            <% } else { %>
+            <div class="listBox">
+                <h1>文章不存在或已被删除</h1>
+                <p class="colDefault">
+                    该文章不存在或已被删除
+                </p>
+            </div>
+            <% } %>
 
+            <% if (article) { %>
             <div class="listBox message">
                 <h3 class="textLeft"><strong>评论</strong> <span class="em">一共有 <em id="messageCount">0</em> 条评论</span></h3>
                 
-                <p class="textLeft">LEELOM</p>
-                <p class="textLeft clear">
-                    <textarea id="messageContent"></textarea><button id="messageBtn" class="submit">提交</button>
-                </p>
+                <% if (userInfo) { %>
+                <div id="userData" data-user-id="<%= userInfo._id %>" data-username="<%= userInfo.username %>" data-is-logged-in="true">
+                    <p class="textLeft"><%= userInfo.username %></p>
+                    <p class="textLeft clear">
+                        <textarea id="messageContent" placeholder="请输入您的评论..."></textarea><button id="messageBtn" class="submit">提交</button>
+                    </p>
+                    <div id="commentStatus" style="display: none; margin-top: 10px; padding: 10px; border-radius: 4px;"></div>
+                </div>
+                <% } else { %>
+                <p class="bgDanger" style="line-height: 30px;">你还没有登录，请先<a href="javascript:void(0)" onclick="showLoginModal()">登录</a>！</p>
+                <% } %>
                 
-                <p class="bgDanger" style="line-height: 30px;">你还没有登录，请先登录！</p>
-                
-
-                <div class="messageList">
-                    <div class="messageBox"><p>还没有留言</p></div>
+                <div class="messageList" id="commentContainer">
+                    <!-- 评论将通过JavaScript动态加载 -->
                 </div>
 
-                <div class="messageList" style="display: block;">
-                    <div class="messageBox">
-                        <p class="name clear"><span class="fl">admin</span><span class="fr">2016年07月29日 17:24:01</span></p><p>哈哈</p>
-                    </div>
-                    <div class="messageBox">
-                        <p class="name clear"><span class="fl">admin</span><span class="fr">2016年07月29日 17:23:34</span></p><p>123123123</p>
-                    </div>
+                <div class="pager" id="commentPager">
+                    <ul class="clear">
+                        <!-- 分页将通过JavaScript动态加载 -->
+                    </ul>
                 </div>
-
             </div>
+            <% } %>
 
             <div class="pager">
                 <ul class="clear">
