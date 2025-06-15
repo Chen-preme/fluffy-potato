@@ -19,7 +19,7 @@
                         作者：<span class="colInfo"><%= article.author ? article.author.username : '未知' %></span> - 
                         时间：<span class="colInfo"><%= new Date(article.createTime).toLocaleString('zh-CN', {year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric'}) %></span> - 
                         阅读：<span class="colInfo"><%= article.views || 0 %></span> - 
-                        评论：<span class="colInfo" id="comment-<%= article._id %>">0</span>
+                        评论：<span class="colInfo" id="comment-<%= article._id %>">加载中...</span>
                     </p>
                     <dfn><%- article.content.length > 200 ? article.content.substring(0, 200) + '...' : article.content %></dfn>
                     <div class="function"><a href="/detail?id=<%= article._id %>">阅读全文</a></div>

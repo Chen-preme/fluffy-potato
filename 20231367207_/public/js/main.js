@@ -37,6 +37,10 @@ let totalComments = 0;
 let totalPages = 0;
 let socket;
 
+// 评论缓存
+const commentCache = new Map();
+const CACHE_EXPIRY = 5 * 60 * 1000; // 5分钟缓存过期时间
+
 // 评论功能相关代码
 // 当页面是文章详情页时执行
 if (currentUrl.startsWith('/detail')) {
@@ -76,6 +80,9 @@ if (currentUrl.startsWith('/detail')) {
             // 清空评论框
             document.getElementById('messageContent').value = '';
             
+            // 清除相关缓存
+            clearCommentCache();
+            
             // 显示成功消息
             showCommentStatus('评论发布成功！', 'success');
             
@@ -106,6 +113,19 @@ if (currentUrl.startsWith('/detail')) {
     });
 }
 
+// 清除评论缓存
+function clearCommentCache() {
+    if (articleId) {
+        // 清除当前文章的所有页面缓存
+        for (const key of commentCache.keys()) {
+            if (key.startsWith(articleId + '_')) {
+                commentCache.delete(key);
+            }
+        }
+        console.log('已清除文章评论缓存');
+    }
+}
+
 // 加载评论
 function loadComments(page) {
     // 使用全局变量articleId
@@ -115,6 +135,21 @@ function loadComments(page) {
     }
     
     currentPage = page;
+    
+    // 检查缓存
+    const cacheKey = `${articleId}_${page}`;
+    const cachedData = commentCache.get(cacheKey);
+    
+    if (cachedData && (Date.now() - cachedData.timestamp < CACHE_EXPIRY)) {
+        console.log('使用缓存数据加载评论');
+        const { comments, pagination } = cachedData.data;
+        totalComments = pagination.total;
+        totalPages = pagination.pages;
+        updateCommentCount(totalComments);
+        renderComments(comments);
+        renderPagination(pagination);
+        return;
+    }
     
     // 显示加载状态
     const container = document.getElementById('commentContainer');
@@ -130,6 +165,12 @@ function loadComments(page) {
                 totalComments = pagination.total;
                 totalPages = pagination.pages;
                 
+                // 缓存数据
+                commentCache.set(cacheKey, {
+                    data: data.data,
+                    timestamp: Date.now()
+                });
+                
                 // 更新评论计数
                 updateCommentCount(totalComments);
                 
@@ -138,17 +179,26 @@ function loadComments(page) {
                 
                 // 渲染分页
                 renderPagination(pagination);
+                
+                showCommentStatus('评论加载成功', 'success');
             } else {
                 if (container) {
-                    container.innerHTML = '<div class="messageBox"><p>加载评论失败</p></div>';
+                    container.innerHTML = '<div class="messageBox"><p>加载评论失败: ' + (data.msg || '未知错误') + '</p></div>';
                 }
+                showCommentStatus('加载评论失败: ' + (data.msg || '未知错误'), 'error');
             }
         })
         .catch(error => {
             console.error('获取评论失败:', error);
             if (container) {
-                container.innerHTML = '<div class="messageBox"><p>加载评论失败，请刷新页面重试</p></div>';
+                container.innerHTML = `
+                    <div class="messageBox">
+                        <p>加载评论失败，请检查网络连接</p>
+                        <button onclick="loadComments(${page})" style="margin-top: 10px; padding: 5px 15px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;">重新加载</button>
+                    </div>
+                `;
             }
+            showCommentStatus('评论加载失败，请检查网络连接', 'error');
         });
 }
 

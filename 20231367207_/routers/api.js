@@ -161,86 +161,83 @@ router.post('/user/change-password', async (req, res) => {
   }
 });
 
-// 评论相关API
 
-// 获取文章评论
+
+
+
+
+// 获取文章评论列表
 router.get('/comments', async (req, res) => {
   try {
     const { articleId, page = 1, limit = 10 } = req.query;
     
     if (!articleId) {
-      return res.json({ code: 1, msg: '文章ID不能为空' });
+      return res.json({ code: 1, msg: '缺少文章ID参数' });
     }
     
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
     
-    // 查询评论总数
+    // 获取评论总数
     const total = await Comment.countDocuments({ articleId });
     
-    // 查询评论列表
+    // 获取分页评论数据
     const comments = await Comment.find({ articleId })
-      .sort({ createTime: -1 }) // 按时间倒序
+      .sort({ createTime: -1 }) // 按创建时间倒序排列
       .skip(skip)
-      .limit(parseInt(limit));
+      .limit(limitNum)
+      .lean(); // 使用lean()提高查询性能
     
-    // 计算总页数
-    const pages = Math.ceil(total / parseInt(limit));
+    // 计算分页信息
+    const pages = Math.ceil(total / limitNum);
     
     return res.json({
       code: 0,
+      msg: '获取成功',
       data: {
         comments,
         pagination: {
+          page: pageNum,
+          limit: limitNum,
           total,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          pages
+          pages,
+          hasNext: pageNum < pages,
+          hasPrev: pageNum > 1
         }
       }
     });
   } catch (err) {
-    console.error('获取评论失败:', err);
+    console.error('获取评论列表异常:', err);
     return res.status(500).json({ code: 500, msg: '服务器内部错误' });
   }
 });
 
-// 获取多篇文章的评论计数
+// 获取文章评论数量
 router.get('/comments/count', async (req, res) => {
   try {
     const { articleIds } = req.query;
     
     if (!articleIds) {
-      return res.json({ code: 1, msg: '文章ID不能为空' });
+      return res.json({ code: 1, msg: '缺少文章ID参数' });
     }
     
-    // 将逗号分隔的文章ID转换为数组
-    const ids = articleIds.split(',');
-    
-    // 查询每篇文章的评论数
+    const articleIdArray = articleIds.split(',');
     const counts = {};
     
-    // 使用聚合查询批量获取评论计数
-    const result = await Comment.aggregate([
-      { $match: { articleId: { $in: ids.map(id => mongoose.Types.ObjectId(id)) } } },
-      { $group: { _id: '$articleId', count: { $sum: 1 } } }
-    ]);
-    
-    // 初始化所有文章的评论数为0
-    ids.forEach(id => {
-      counts[id] = 0;
-    });
-    
-    // 更新有评论的文章的计数
-    result.forEach(item => {
-      counts[item._id] = item.count;
-    });
+    // 批量获取每篇文章的评论数量
+    for (const articleId of articleIdArray) {
+      const count = await Comment.countDocuments({ articleId });
+      counts[articleId] = count;
+    }
     
     return res.json({
       code: 0,
+      msg: '获取成功',
       data: counts
     });
   } catch (err) {
-    console.error('获取评论计数失败:', err);
+    console.error('获取评论数量异常:', err);
     return res.status(500).json({ code: 500, msg: '服务器内部错误' });
   }
 });

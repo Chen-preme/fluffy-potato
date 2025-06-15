@@ -33,5 +33,12 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('获取评论计数失败:', error);
+            // 如果API调用失败，将所有评论数设置为0
+            articleIds.forEach(articleId => {
+                const commentElement = document.getElementById(`comment-${articleId}`);
+                if (commentElement) {
+                    commentElement.textContent = '0';
+                }
+            });
         });
 });
