@@ -165,6 +165,27 @@ router.get('/favorites', async (req, res) => {
     }
 });
 
+// 邮件发送页面
+router.get('/email', async (req, res) => {
+    try {
+        // 获取分类列表
+        let categories = await Category.find();
+        
+        res.render('main/email', {
+            title: '发送邮件',
+            userInfo: req.userInfo,
+            categories: categories
+        });
+    } catch (err) {
+        console.error('邮件页面渲染失败:', err);
+        res.render('main/email', {
+            title: '发送邮件',
+            userInfo: req.userInfo,
+            categories: []
+        });
+    }
+});
+
 module.exports = router;
 
 

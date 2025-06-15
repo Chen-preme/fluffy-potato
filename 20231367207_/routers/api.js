@@ -404,4 +404,132 @@ router.get('/favorite/check', async (req, res) => {
   }
 });
 
+// 邮件发送相关接口
+const emailService = require('../services/emailService');
+
+// 发送用户间邮件
+router.post('/email/send', async (req, res) => {
+  try {
+    // 检查用户是否登录
+    if (!req.session.user) {
+      return res.json({ code: 1, msg: '请先登录' });
+    }
+
+    const { toUsername, subject, content } = req.body;
+
+    // 验证必填字段
+    if (!toUsername || !subject || !content) {
+      return res.json({ code: 2, msg: '收件人、主题和内容不能为空' });
+    }
+
+    // 查找发送者信息
+    const fromUser = await User.findById(req.session.user._id);
+    if (!fromUser) {
+      return res.json({ code: 3, msg: '发送者不存在' });
+    }
+
+    // 查找接收者信息
+    const toUser = await User.findOne({ username: toUsername });
+    if (!toUser) {
+      return res.json({ code: 4, msg: '接收者不存在' });
+    }
+
+    // 检查接收者是否设置了邮箱
+    if (!toUser.email) {
+      return res.json({ code: 5, msg: '接收者未设置邮箱地址' });
+    }
+
+    // 验证邮箱格式
+    if (!emailService.validateEmail(toUser.email)) {
+      return res.json({ code: 6, msg: '接收者邮箱格式不正确' });
+    }
+
+    // 发送邮件
+    const result = await emailService.sendUserToUserEmail(
+      fromUser,
+      toUser.email,
+      subject,
+      content
+    );
+
+    if (result.success) {
+      return res.json({ code: 0, msg: '邮件发送成功', messageId: result.messageId });
+    } else {
+      return res.json({ code: 7, msg: result.message || '邮件发送失败' });
+    }
+
+  } catch (err) {
+    console.error('发送邮件异常:', err);
+    return res.status(500).json({ code: 500, msg: '服务器内部错误' });
+  }
+});
+
+// 获取所有用户列表（用于选择收件人）
+router.get('/users/list', async (req, res) => {
+  try {
+    // 检查用户是否登录
+    if (!req.session.user) {
+      return res.json({ code: 1, msg: '请先登录' });
+    }
+
+    // 获取所有用户（排除当前用户和被冻结的用户）
+    const users = await User.find({
+      _id: { $ne: req.session.user._id },
+      isFrozen: false
+    }).select('username email').sort({ username: 1 });
+
+    return res.json({
+      code: 0,
+      msg: '获取成功',
+      data: users.map(user => ({
+        username: user.username,
+        hasEmail: !!user.email
+      }))
+    });
+
+  } catch (err) {
+    console.error('获取用户列表异常:', err);
+    return res.status(500).json({ code: 500, msg: '服务器内部错误' });
+  }
+});
+
+// 更新用户邮箱
+router.post('/user/update-email', async (req, res) => {
+  try {
+    // 检查用户是否登录
+    if (!req.session.user) {
+      return res.json({ code: 1, msg: '请先登录' });
+    }
+
+    const { email } = req.body;
+
+    // 验证邮箱格式
+    if (email && !emailService.validateEmail(email)) {
+      return res.json({ code: 2, msg: '邮箱格式不正确' });
+    }
+
+    // 检查邮箱是否已被其他用户使用
+    if (email) {
+      const existingUser = await User.findOne({ 
+        email: email, 
+        _id: { $ne: req.session.user._id } 
+      });
+      if (existingUser) {
+        return res.json({ code: 3, msg: '该邮箱已被其他用户使用' });
+      }
+    }
+
+    // 更新用户邮箱
+    await User.findByIdAndUpdate(req.session.user._id, { 
+      email: email || null 
+    });
+
+    return res.json({ code: 0, msg: '邮箱更新成功' });
+
+  } catch (err) {
+    console.error('更新邮箱异常:', err);
+    return res.status(500).json({ code: 500, msg: '服务器内部错误' });
+  }
+});
+
 module.exports = router;

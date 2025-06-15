@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<%- include('./comp_head.html') %>
+<body>
+    <%- include('./comp_header.html') %>
+    <%- include('./comp_nav.html') %>
+    
+    <main class="clear">
+        <div class="mainLeft">
+            <div class="page-header">
+                <h1 class="page-title">发送邮件</h1>
+                <p class="page-description">向其他用户发送邮件消息</p>
+            </div>
+
+            <% if (userInfo && userInfo.username) { %>
+                <!-- 邮件发送表单 -->
+                <div class="email-form-container">
+                    <form id="emailForm">
+                        <div class="form-group">
+                            <label for="toUsername">收件人用户名:</label>
+                            <select id="toUsername" name="toUsername" required>
+                                <option value="">请选择收件人</option>
+                            </select>
+                            <div class="user-email-status" id="userEmailStatus"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subject">邮件主题:</label>
+                            <input type="text" id="subject" name="subject" placeholder="请输入邮件主题" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="content">邮件内容:</label>
+                            <textarea id="content" name="content" rows="10" placeholder="请输入邮件内容" required></textarea>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" id="sendEmailBtn" class="btn btn-primary">
+                                <i class="fa fa-send"></i> 发送邮件
+                            </button>
+                            <button type="button" id="clearFormBtn" class="btn btn-secondary">
+                                <i class="fa fa-refresh"></i> 清空表单
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 邮箱设置区域 -->
+                <div class="email-settings">
+                    <h3>邮箱设置</h3>
+                    <p class="settings-description">设置您的邮箱地址以接收其他用户发送的邮件</p>
+                    
+                    <form id="emailSettingsForm">
+                        <div class="form-group">
+                            <label for="userEmail">我的邮箱:</label>
+                            <input type="email" id="userEmail" name="userEmail" placeholder="请输入您的邮箱地址">
+                            <small class="form-text">设置邮箱后，其他用户可以向您发送邮件</small>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" id="updateEmailBtn" class="btn btn-success">
+                                <i class="fa fa-save"></i> 保存邮箱
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            <% } else { %>
+                <!-- 未登录提示 -->
+                <div class="login-required">
+                    <i class="fa fa-user-o"></i>
+                    <h3>请先登录</h3>
+                    <p>您需要登录后才能发送邮件</p>
+                    <button class="btn btn-primary" onclick="showLoginModal()">立即登录</button>
+                </div>
+            <% } %>
+
+            <!-- 状态提示区域 -->
+            <div id="emailStatus" class="alert" style="display: none;"></div>
+        </div>
+
+        <%- include('./comp_sidebar.html') %>
+    </main>
+
+    <%- include('./comp_footer.html') %>
+    
+    <script src="/public/js/email.js"></script>
+</body>
+</html>
