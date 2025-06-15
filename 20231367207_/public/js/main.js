@@ -8,6 +8,120 @@
  navLinks.forEach(link => {
      link.classList.remove('focus');
  });
+
+// 收藏功能
+$(document).ready(function() {
+    // 检查文章收藏状态
+    const articleId = document.getElementById('articleData')?.dataset.articleId;
+    if (articleId && document.getElementById('favoriteBtn')) {
+        checkFavoriteStatus(articleId);
+    }
+    
+    // 收藏按钮点击事件
+    $('#favoriteBtn').on('click', function() {
+        const articleId = $(this).data('article-id');
+        const isFavorited = $(this).hasClass('favorited');
+        
+        if (isFavorited) {
+            removeFavorite(articleId);
+        } else {
+            addFavorite(articleId);
+        }
+    });
+});
+
+// 检查收藏状态
+function checkFavoriteStatus(articleId) {
+    fetch(`/api/favorite/check?articleId=${articleId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.code === 0) {
+                updateFavoriteButton(data.data.isFavorited);
+            }
+        })
+        .catch(error => {
+            console.error('检查收藏状态失败:', error);
+        });
+}
+
+// 添加收藏
+function addFavorite(articleId) {
+    const btn = $('#favoriteBtn');
+    btn.prop('disabled', true);
+    
+    fetch('/api/favorite/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ articleId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.code === 0) {
+            updateFavoriteButton(true);
+            showCommentStatus('收藏成功！', 'success');
+        } else {
+            showCommentStatus('收藏失败: ' + data.msg, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('收藏失败:', error);
+        showCommentStatus('网络错误，请稍后重试', 'error');
+    })
+    .finally(() => {
+        btn.prop('disabled', false);
+    });
+}
+
+// 取消收藏
+function removeFavorite(articleId) {
+    const btn = $('#favoriteBtn');
+    btn.prop('disabled', true);
+    
+    fetch('/api/favorite/remove', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ articleId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.code === 0) {
+            updateFavoriteButton(false);
+            showCommentStatus('取消收藏成功！', 'success');
+        } else {
+            showCommentStatus('取消收藏失败: ' + data.msg, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('取消收藏失败:', error);
+        showCommentStatus('网络错误，请稍后重试', 'error');
+    })
+    .finally(() => {
+        btn.prop('disabled', false);
+    });
+}
+
+// 更新收藏按钮状态
+function updateFavoriteButton(isFavorited) {
+    const btn = $('#favoriteBtn');
+    const icon = btn.find('i');
+    const text = btn.find('.favorite-text');
+    
+    if (isFavorited) {
+        btn.addClass('favorited')
+           .css('background', '#dc3545');
+        icon.removeClass('fa-heart-o').addClass('fa-heart');
+        text.text('取消收藏');
+    } else {
+        btn.removeClass('favorited')
+           .css('background', '#007bff');
+        icon.removeClass('fa-heart').addClass('fa-heart-o');
+        text.text('收藏');
+    }
+}
  
  // 根据当前URL设置对应链接的focus类
  if (currentUrl === '/') {
@@ -554,7 +668,7 @@ function showLoginModal() {
                     window.location.reload();
                 } else {
                     // 登录失败，显示错误信息
-                    alert(data.message || '登录失败');
+                    alert(data.msg || data.message || '登录失败');
                 }
             })
             .catch(error => {

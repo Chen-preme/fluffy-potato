@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<%- include('./comp_head.html') %>
+<link href="/public/css/favorites.css" rel="stylesheet" type="text/css">
+<body>
+    <%- include('./comp_header.html') %>
+    <%- include('./comp_nav.html') %>
+    
+    <main class="clear">
+        <div class="mainLeft">
+            <div class="page-header">
+                <h1 class="page-title">我的收藏</h1>
+                <p class="page-description">这里是您收藏的所有文章</p>
+            </div>
+            
+            <!-- 收藏状态提示 -->
+            <div id="favoriteStatus" class="alert" style="display: none;"></div>
+            
+            <!-- 收藏列表容器 -->
+            <div id="favoriteContainer">
+                <div class="loading-message text-center py-4">
+                    <i class="fa fa-spinner fa-spin"></i> 正在加载收藏列表...
+                </div>
+            </div>
+            
+            <!-- 分页容器 -->
+            <div id="favoritePager" class="pagination-wrapper"></div>
+        </div>
+        
+        <%- include("./comp_sidebar.html", { userInfo: userInfo }) %>
+    </main>
+
+    <%- include("./comp_footer.html")%>
+    
+
+    
+    <script src="/js/favorites.js"></script>
+</body>
+</html>

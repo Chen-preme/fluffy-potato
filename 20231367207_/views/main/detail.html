@@ -25,6 +25,22 @@
                 <dfn>
                     <%- article.content %>
                 </dfn>
+                
+                <!-- 文章操作按钮 -->
+                <div class="article-actions" style="margin-top: 20px; padding: 15px; border-top: 1px solid #eee; text-align: center;">
+                    <% if (userInfo) { %>
+                    <button id="favoriteBtn" class="btn-favorite" data-article-id="<%= article._id %>" style="background: #007bff; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                        <i class="fa fa-heart-o"></i> <span class="favorite-text">收藏</span>
+                    </button>
+                    <% } else { %>
+                    <button onclick="showLoginModal()" class="btn-favorite" style="background: #6c757d; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                        <i class="fa fa-heart-o"></i> 登录后收藏
+                    </button>
+                    <% } %>
+                    <span class="article-share" style="color: #666;">
+                        <i class="fa fa-share-alt"></i> 分享文章
+                    </span>
+                </div>
             </div>
             <% } else { %>
             <div class="listBox">

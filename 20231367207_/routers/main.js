@@ -144,6 +144,27 @@ router.get('/detail', async (req, res) => {
 
 
 
+// 收藏页面
+router.get('/favorites', async (req, res) => {
+    try {
+        // 获取分类列表
+        let categories = await Category.find();
+        
+        res.render('main/favorites', {
+            title: '我的收藏',
+            userInfo: req.userInfo,
+            categories: categories
+        });
+    } catch (err) {
+        console.error('收藏页面渲染失败:', err);
+        res.render('main/favorites', {
+            title: '我的收藏',
+            userInfo: req.userInfo,
+            categories: []
+        });
+    }
+});
+
 module.exports = router;
 
 

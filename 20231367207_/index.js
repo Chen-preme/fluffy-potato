@@ -36,10 +36,25 @@ app.use(session({
   }
 }));
 
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   // 从 req.session 中获取用户信息，而不是手动解析 cookie
   if (req.session && req.session.user) {
-    req.userInfo = req.session.user; 
+    try {
+      // 验证用户是否仍然存在且未被冻结
+      const User = require('./models/user');
+      const user = await User.findById(req.session.user._id);
+      
+      if (!user || user.isFrozen) {
+        // 用户不存在或被冻结，清除session
+        req.session.destroy();
+        req.userInfo = null;
+      } else {
+        req.userInfo = req.session.user;
+      }
+    } catch (err) {
+      console.error('验证用户状态失败:', err);
+      req.userInfo = null;
+    }
   } else {
     req.userInfo = null; 
   }

@@ -84,6 +84,9 @@ $(function(){
               // $loginBox.hide();
               // $userInfo.show(); 
             }, 1000); // 
+          } else {
+            // 登录失败时，确保错误信息显示为红色
+            $loginBox.find('.colWarning').css('color', 'red');
           }
         }
       })

@@ -1,0 +1,104 @@
+/* 收藏页面样式 */
+.mainLeft .favorite-item {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background: #fff;
+    transition: box-shadow 0.3s ease;
+}
+
+.favorite-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.favorite-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.favorite-title a {
+    color: #333;
+    text-decoration: none;
+}
+
+.favorite-title a:hover {
+    color: #007bff;
+}
+
+.favorite-meta {
+    color: #666;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+.favorite-content {
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.favorite-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-unfavorite {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.btn-unfavorite:hover {
+    background-color: #c82333;
+}
+ouou
+h
+
+.mainLeft .page-header {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.mainLeft .page-title {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.mainLeft .page-description {
+    color: #666;
+    margin: 0;
+    font-size: 0.9em;
+}
+
+.mainLeft .pagination-wrapper {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.mainLeft .loading-message {
+    color: #666;
+    font-size: 1.1em;
+    padding: 40px 20px;
+}
+
+.mainLeft .empty-favorites {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.mainLeft .empty-favorites i {
+    font-size: 4em;
+    margin-bottom: 20px;
+    color: #ddd;
+}

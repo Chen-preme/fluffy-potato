@@ -72,6 +72,11 @@ router.post('/user/login', async (req, res) => {
       return res.json({ code: 2, msg: '用户名或密码错误' });
     }
 
+    // 检查用户是否被冻结
+    if (user.isFrozen) {
+      return res.json({ code: 3, msg: '账户已被冻结，无法登录' });
+    }
+
     // 设置 session
     req.session.user = {
       _id: user._id,
@@ -238,6 +243,163 @@ router.get('/comments/count', async (req, res) => {
     });
   } catch (err) {
     console.error('获取评论数量异常:', err);
+    return res.status(500).json({ code: 500, msg: '服务器内部错误' });
+  }
+});
+
+// 添加收藏
+router.post('/favorite/add', async (req, res) => {
+  try {
+    if (!req.userInfo) {
+      return res.json({ code: 1, msg: '请先登录' });
+    }
+    
+    const { articleId } = req.body;
+    if (!articleId) {
+      return res.json({ code: 2, msg: '缺少文章ID' });
+    }
+    
+    // 检查文章是否存在
+    const article = await Article.findById(articleId);
+    if (!article) {
+      return res.json({ code: 3, msg: '文章不存在' });
+    }
+    
+    // 检查是否已经收藏
+    const existingFavorite = await Favorite.findOne({
+      userId: req.userInfo._id,
+      articleId: articleId
+    });
+    
+    if (existingFavorite) {
+      return res.json({ code: 4, msg: '已经收藏过了' });
+    }
+    
+    // 创建收藏记录
+    const favorite = new Favorite({
+      userId: req.userInfo._id,
+      articleId: articleId
+    });
+    
+    await favorite.save();
+    
+    return res.json({
+      code: 0,
+      msg: '收藏成功'
+    });
+  } catch (err) {
+    console.error('添加收藏异常:', err);
+    return res.status(500).json({ code: 500, msg: '服务器内部错误' });
+  }
+});
+
+// 取消收藏
+router.post('/favorite/remove', async (req, res) => {
+  try {
+    if (!req.userInfo) {
+      return res.json({ code: 1, msg: '请先登录' });
+    }
+    
+    const { articleId } = req.body;
+    if (!articleId) {
+      return res.json({ code: 2, msg: '缺少文章ID' });
+    }
+    
+    // 删除收藏记录
+    const result = await Favorite.deleteOne({
+      userId: req.userInfo._id,
+      articleId: articleId
+    });
+    
+    if (result.deletedCount === 0) {
+      return res.json({ code: 3, msg: '未找到收藏记录' });
+    }
+    
+    return res.json({
+      code: 0,
+      msg: '取消收藏成功'
+    });
+  } catch (err) {
+    console.error('取消收藏异常:', err);
+    return res.status(500).json({ code: 500, msg: '服务器内部错误' });
+  }
+});
+
+// 获取收藏列表
+router.get('/favorites', async (req, res) => {
+  try {
+    if (!req.userInfo) {
+      return res.json({ code: 1, msg: '请先登录' });
+    }
+    
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    // 获取收藏总数
+    const total = await Favorite.countDocuments({ userId: req.userInfo._id });
+    const pages = Math.ceil(total / limit);
+    
+    // 获取收藏列表，关联文章信息
+    const favorites = await Favorite.find({ userId: req.userInfo._id })
+      .populate({
+        path: 'articleId',
+        populate: {
+          path: 'category author',
+          select: 'name username'
+        }
+      })
+      .sort({ createTime: -1 })
+      .skip(skip)
+      .limit(limit);
+    
+    // 过滤掉已删除的文章
+    const validFavorites = favorites.filter(fav => fav.articleId);
+    
+    return res.json({
+      code: 0,
+      msg: '获取成功',
+      data: {
+        favorites: validFavorites,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages,
+          hasNext: page < pages,
+          hasPrev: page > 1
+        }
+      }
+    });
+  } catch (err) {
+    console.error('获取收藏列表异常:', err);
+    return res.status(500).json({ code: 500, msg: '服务器内部错误' });
+  }
+});
+
+// 检查文章是否已收藏
+router.get('/favorite/check', async (req, res) => {
+  try {
+    if (!req.userInfo) {
+      return res.json({ code: 0, data: { isFavorited: false } });
+    }
+    
+    const { articleId } = req.query;
+    if (!articleId) {
+      return res.json({ code: 2, msg: '缺少文章ID' });
+    }
+    
+    const favorite = await Favorite.findOne({
+      userId: req.userInfo._id,
+      articleId: articleId
+    });
+    
+    return res.json({
+      code: 0,
+      data: { isFavorited: !!favorite }
+    });
+  } catch (err) {
+    console.error('检查收藏状态异常:', err);
     return res.status(500).json({ code: 500, msg: '服务器内部错误' });
   }
 });
