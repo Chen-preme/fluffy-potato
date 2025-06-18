@@ -163,10 +163,16 @@ if (currentUrl.startsWith('/detail')) {
         articleId = document.getElementById('articleData')?.dataset.articleId;
         isLoggedIn = document.getElementById('userData')?.dataset.isLoggedIn === 'true';
         
+        // 将articleId设为全局变量，供其他模块使用
+        window.articleId = articleId;
+        
         if (!articleId) return; // 如果没有文章ID，不执行后续代码
         
         // 初始化Socket.IO连接
         socket = io();
+        
+        // 将socket设为全局变量，供其他模块使用
+        window.socket = socket;
         
         // 加入文章房间
         socket.emit('join_article', articleId);
@@ -431,6 +437,17 @@ function createCommentHtml(comment) {
     const date = new Date(comment.createTime);
     const formattedDate = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
     
+    // 处理图片显示
+    let imagesHtml = '';
+    if (comment.images && comment.images.length > 0) {
+        imagesHtml = '<div class="comment-images">';
+        comment.images.forEach(image => {
+            const imagePath = image.path || `/uploads/comments/${image.filename}`;
+            imagesHtml += `<img src="${imagePath}" alt="${image.originalName || '评论图片'}" class="comment-image" style="max-width: 200px; max-height: 200px; margin: 5px; border-radius: 4px; cursor: pointer;" onclick="window.open('${imagePath}', '_blank')">`;
+        });
+        imagesHtml += '</div>';
+    }
+    
     return `
         <div class="messageBox">
             <p class="name clear">
@@ -438,6 +455,7 @@ function createCommentHtml(comment) {
                 <span class="fr">${formattedDate}</span>
             </p>
             <p>${comment.content}</p>
+            ${imagesHtml}
         </div>
     `;
 }

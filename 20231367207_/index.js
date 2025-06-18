@@ -63,6 +63,9 @@ app.use(async (req, res, next) => {
 
 // 静态目录
 app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/js', express.static(path.join(__dirname, 'public/js')));
+app.use('/css', express.static(path.join(__dirname, 'public/css')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/main', express.static(path.join(__dirname, 'main')));
 
 // 挂载业务路由
@@ -83,7 +86,7 @@ io.on('connection', (socket) => {
   // 处理新评论
   socket.on('new_comment', async (data) => {
     try {
-      const { articleId, userId, username, content } = data;
+      const { articleId, userId, username, content, images } = data;
       
       // 创建新评论并保存到数据库
       const newComment = new Comment({
@@ -91,6 +94,7 @@ io.on('connection', (socket) => {
         userId,
         username,
         content,
+        images: images || [],
         createTime: new Date()
       });
       
@@ -105,6 +109,7 @@ io.on('connection', (socket) => {
           _id: newComment._id,
           username: newComment.username,
           content: newComment.content,
+          images: newComment.images,
           createTime: newComment.createTime
         },
         commentCount

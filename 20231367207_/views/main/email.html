@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <%- include('./comp_head.html') %>
+<link rel="stylesheet" href="/css/upload-styles.css">
+   
 <body>
     <%- include('./comp_header.html') %>
     <%- include('./comp_nav.html') %>
@@ -32,6 +34,20 @@
                         <div class="form-group">
                             <label for="content">邮件内容:</label>
                             <textarea id="content" name="content" rows="10" placeholder="请输入邮件内容" required></textarea>
+                        </div>
+
+                        <!-- 附件上传区域 -->
+                        <div class="form-group">
+                            <label>附件:</label>
+                            <div class="attachment-upload-area" id="attachmentUploadArea">
+                                <div class="upload-prompt">
+                                    <i class="fa fa-cloud-upload"></i>
+                                    <p>点击选择文件或拖拽文件到此处</p>
+                                    <p class="upload-hint">支持多个文件，单个文件最大10MB，总大小不超过25MB</p>
+                                </div>
+                                <input type="file" id="attachmentInput" multiple style="display: none;">
+                            </div>
+                            <div class="attachment-list" id="attachmentList"></div>
                         </div>
 
                         <div class="form-actions">
@@ -84,5 +100,8 @@
     <%- include('./comp_footer.html') %>
     
     <script src="/public/js/email.js"></script>
+    <script src="/public/js/email-attachments.js"></script>
+
+    <script src="/js/init-uploads.js"></script>
 </body>
 </html>

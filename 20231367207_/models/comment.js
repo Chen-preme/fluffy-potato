@@ -5,6 +5,13 @@ const commentSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   username: String,
   content: String,
+  images: [{
+    filename: String,
+    originalName: String,
+    path: String,
+    size: Number,
+    mimetype: String
+  }],
   createTime: { type: Date, default: Date.now }
 });
 

@@ -1,0 +1,231 @@
+/* 评论图片上传样式 */
+.comment-image-upload {
+    margin: 15px 0;
+    padding: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.upload-area {
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #fff;
+}
+
+.upload-area:hover {
+    border-color: #007bff;
+    background-color: #f8f9fa;
+}
+
+.upload-area.drag-over {
+    border-color: #007bff;
+    background-color: #e3f2fd;
+}
+
+.upload-placeholder {
+    color: #666;
+}
+
+.upload-placeholder i {
+    font-size: 48px;
+    color: #ccc;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.upload-placeholder span {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.upload-placeholder small {
+    color: #999;
+    font-size: 12px;
+}
+
+.image-preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.image-preview-item {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #fff;
+}
+
+.image-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-preview-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.image-preview-item:hover .image-preview-overlay {
+    opacity: 1;
+}
+
+.remove-image-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-image-btn:hover {
+    background: #c82333;
+}
+
+.image-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 5px;
+    font-size: 10px;
+    text-align: center;
+}
+
+/* 邮件附件上传样式 */
+.email-attachment-upload {
+    margin: 15px 0;
+    padding: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.attachment-list {
+    margin-top: 15px;
+}
+
+.attachment-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    margin-bottom: 8px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.attachment-info {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.attachment-icon {
+    margin-right: 10px;
+    font-size: 20px;
+    color: #666;
+}
+
+.attachment-details {
+    flex: 1;
+}
+
+.attachment-name {
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+
+.attachment-size {
+    font-size: 12px;
+    color: #999;
+}
+
+.remove-attachment-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.remove-attachment-btn:hover {
+    background: #c82333;
+}
+
+.upload-progress {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #f0f0f0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #007bff;
+    transition: width 0.3s ease;
+    border-radius: 10px;
+}
+
+.progress-text {
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    display: block;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .image-preview-item {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .upload-area {
+        padding: 20px;
+    }
+    
+    .upload-placeholder i {
+        font-size: 36px;
+    }
+}

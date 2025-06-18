@@ -3,6 +3,7 @@
 <html>
 <head>
     <%- include("./comp_head.html")%>
+    <link rel="stylesheet" href="/css/comment-images.css">
 </head>
 
 <body>
@@ -61,6 +62,20 @@
                     <p class="textLeft clear">
                         <textarea id="messageContent" placeholder="请输入您的评论..."></textarea><button id="messageBtn" class="submit">提交</button>
                     </p>
+                    
+                    <!-- 图片上传区域 -->
+                    <div class="comment-image-upload">
+                        <div class="image-upload-area" id="imageUploadArea">
+                            <div class="upload-prompt">
+                                <i class="fa fa-image"></i>
+                                <span>点击或拖拽添加图片</span>
+                                <small>支持JPG、PNG、GIF格式，单张最大5MB，最多3张</small>
+                            </div>
+                            <input type="file" id="imageInput" accept="image/*" multiple style="display: none;">
+                        </div>
+                        <div class="image-preview-container" id="imagePreviewContainer"></div>
+                    </div>
+                    
                     <div id="commentStatus" style="display: none; margin-top: 10px; padding: 10px; border-radius: 4px;"></div>
                 </div>
                 <% } else { %>
@@ -99,6 +114,8 @@
         <%- include("./comp_sidebar.html")%>
 
     </main>
+    +
     <%- include("./comp_footer.html")%>
+    <script src="/js/comment-images.js"></script>
 </body>
 </html>

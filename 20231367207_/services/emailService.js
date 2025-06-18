@@ -1,5 +1,7 @@
 const nodemailer = require('nodemailer');
 const emailConfig = require('../config/email');
+const path = require('path');
+const fs = require('fs');
 
 class EmailService {
     constructor() {
@@ -42,9 +44,10 @@ class EmailService {
      * @param {string} toEmail - 接收者邮箱
      * @param {string} subject - 邮件主题
      * @param {string} content - 邮件内容
+     * @param {Array} attachments - 附件数组
      * @returns {Promise<Object>} 发送结果
      */
-    async sendUserToUserEmail(fromUser, toEmail, subject, content) {
+    async sendUserToUserEmail(fromUser, toEmail, subject, content, attachments = []) {
         try {
             const template = this.config.templates.userToUser;
             const sendTime = new Date().toLocaleString('zh-CN');
@@ -66,6 +69,15 @@ class EmailService {
                 subject: emailSubject,
                 html: emailHtml
             };
+
+            // 添加附件
+            if (attachments && attachments.length > 0) {
+                mailOptions.attachments = attachments.map(file => ({
+                    filename: file.originalName,
+                    path: file.path,
+                    contentType: file.mimetype
+                }));
+            }
 
             const info = await this.transporter.sendMail(mailOptions);
             return {

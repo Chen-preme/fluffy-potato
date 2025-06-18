@@ -5,6 +5,9 @@ const User = require('../models/user');
 const Article = require('../models/article');
 const Comment = require('../models/comment');
 const Favorite = require('../models/favorite');
+const { handleCommentImageUpload, handleEmailAttachmentUpload } = require('../middleware/upload');
+const path = require('path');
+const fs = require('fs');
 
 const session = require('express-session');
 
@@ -247,6 +250,65 @@ router.get('/comments/count', async (req, res) => {
   }
 });
 
+// 上传评论图片
+router.post('/comment/upload-images', handleCommentImageUpload, async (req, res) => {
+  try {
+    if (!req.userInfo) {
+      return res.json({ code: 1, msg: '请先登录' });
+    }
+    
+    if (!req.files || req.files.length === 0) {
+      return res.json({ code: 2, msg: '请选择要上传的图片' });
+    }
+    
+    const images = req.files.map(file => ({
+      filename: file.filename,
+      originalName: file.originalname,
+      path: `/uploads/comments/${file.filename}`,
+      size: file.size,
+      mimetype: file.mimetype
+    }));
+    
+    return res.json({
+      code: 0,
+      msg: '图片上传成功',
+      data: images
+    });
+  } catch (err) {
+    console.error('上传评论图片异常:', err);
+    return res.status(500).json({ code: 500, msg: '服务器内部错误' });
+  }
+});
+
+// 删除评论图片
+router.delete('/comment/delete-image', async (req, res) => {
+  try {
+    if (!req.userInfo) {
+      return res.json({ code: 1, msg: '请先登录' });
+    }
+    
+    const { filename } = req.body;
+    
+    if (!filename) {
+      return res.json({ code: 2, msg: '缺少文件名参数' });
+    }
+    
+    const filePath = path.join(__dirname, '../uploads/comments', filename);
+    
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+    
+    return res.json({
+      code: 0,
+      msg: '图片删除成功'
+    });
+  } catch (err) {
+    console.error('删除评论图片异常:', err);
+    return res.status(500).json({ code: 500, msg: '服务器内部错误' });
+  }
+});
+
 // 添加收藏
 router.post('/favorite/add', async (req, res) => {
   try {
@@ -407,8 +469,8 @@ router.get('/favorite/check', async (req, res) => {
 // 邮件发送相关接口
 const emailService = require('../services/emailService');
 
-// 发送用户间邮件
-router.post('/email/send', async (req, res) => {
+// 发送用户间邮件（支持附件）
+router.post('/email/send', handleEmailAttachmentUpload, async (req, res) => {
   try {
     // 检查用户是否登录
     if (!req.session.user) {
@@ -444,16 +506,34 @@ router.post('/email/send', async (req, res) => {
       return res.json({ code: 6, msg: '接收者邮箱格式不正确' });
     }
 
+    // 处理附件
+    let attachments = [];
+    if (req.files && req.files.length > 0) {
+      attachments = req.files.map(file => ({
+        originalName: file.originalname,
+        filename: file.filename,
+        path: file.path,
+        size: file.size,
+        mimetype: file.mimetype
+      }));
+    }
+
     // 发送邮件
     const result = await emailService.sendUserToUserEmail(
       fromUser,
       toUser.email,
       subject,
-      content
+      content,
+      attachments
     );
 
     if (result.success) {
-      return res.json({ code: 0, msg: '邮件发送成功', messageId: result.messageId });
+      return res.json({ 
+        code: 0, 
+        msg: '邮件发送成功', 
+        messageId: result.messageId,
+        attachmentCount: attachments.length
+      });
     } else {
       return res.json({ code: 7, msg: result.message || '邮件发送失败' });
     }
