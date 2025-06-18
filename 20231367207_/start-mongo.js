@@ -4,7 +4,7 @@ const os = require('os');
 if (os.platform() === 'win32') {
   // Windows 配置路径（需要加双引号处理空格）
   const mongodPath = `"D:\\Program Files\\MongoDB\\Server\\4.0\\bin\\mongod.exe"`;
-  const dbPath = `"D:\\WebstormProjects\\cms\\db"`;
+  const dbPath = `"D:\\WebstormProjects\\db"`;
   const port = 27018;
 
   // 构造命令

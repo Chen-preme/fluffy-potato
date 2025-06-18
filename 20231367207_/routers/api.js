@@ -4,12 +4,19 @@ const router = express.Router();
 const User = require('../models/user');
 const Article = require('../models/article');
 const Comment = require('../models/comment');
+const Category = require('../models/category');
+const FriendLink = require('../models/friendlink');
 const Favorite = require('../models/favorite');
 const { handleCommentImageUpload, handleEmailAttachmentUpload } = require('../middleware/upload');
 const path = require('path');
 const fs = require('fs');
+const emailService = require('../services/emailService');
+const imageProcessingRouter = require('./imageProcessing');
 
 const session = require('express-session');
+
+// 注册图片处理路由
+router.use('/image-processing', imageProcessingRouter);
 
 router.post('/user/register', async (req, res) => {
     
@@ -467,7 +474,6 @@ router.get('/favorite/check', async (req, res) => {
 });
 
 // 邮件发送相关接口
-const emailService = require('../services/emailService');
 
 // 发送用户间邮件（支持附件）
 router.post('/email/send', handleEmailAttachmentUpload, async (req, res) => {

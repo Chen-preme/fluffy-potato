@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Category = require('../models/category');
 const Article = require('../models/article');
+const path = require('path');
 
 
 // 首页
@@ -183,6 +184,23 @@ router.get('/email', async (req, res) => {
             userInfo: req.userInfo,
             categories: []
         });
+    }
+});
+
+// 图片处理页面
+router.get('/image-processing', async (req, res) => {
+    try {
+        // 获取分类列表
+        let categories = await Category.find();
+        
+        res.render('main/image-processing', {
+            title: '图片处理',
+            userInfo: req.userInfo,
+            categories: categories
+        });
+    } catch (err) {
+        console.error('图片处理页面渲染失败:', err);
+        res.sendFile(path.join(__dirname, '../public', 'image-processing.html'));
     }
 });
 

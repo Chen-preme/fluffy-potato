@@ -25,7 +25,15 @@ class EmailAttachmentUploader {
     }
 
     createUploadUI() {
-        const emailForm = document.querySelector('#email-form');
+        // 检查是否已存在上传区域
+        const existingUploadArea = document.getElementById('attachmentUploadArea');
+        if (existingUploadArea) {
+            // 使用现有的HTML结构，只需要添加事件监听
+            this.setupExistingUI();
+            return;
+        }
+
+        const emailForm = document.querySelector('#emailForm');
         if (!emailForm) return;
 
         const attachmentUploadHTML = `
@@ -51,6 +59,51 @@ class EmailAttachmentUploader {
 
         const contentTextarea = emailForm.querySelector('textarea[name="content"]');
         contentTextarea.closest('.form-group').insertAdjacentHTML('afterend', attachmentUploadHTML);
+    }
+
+    setupExistingUI() {
+        // 为现有的HTML结构设置事件监听
+        const uploadArea = document.getElementById('attachmentUploadArea');
+        const fileInput = document.getElementById('attachmentInput');
+        const attachmentList = document.getElementById('attachmentList');
+
+        if (!uploadArea || !fileInput) return;
+
+        // 点击上传
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // 文件选择
+        fileInput.addEventListener('change', (e) => {
+            this.handleFiles(e.target.files);
+        });
+
+        // 拖拽上传
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            this.handleFiles(e.dataTransfer.files);
+        });
+
+        // 表单提交事件
+        const emailForm = document.querySelector('#emailForm');
+        if (emailForm) {
+            emailForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.submitEmailWithAttachments();
+            });
+        }
     }
 
     bindEvents() {
@@ -156,7 +209,11 @@ class EmailAttachmentUploader {
     }
 
     renderAttachmentList() {
-        const listContainer = document.getElementById('attachment-list');
+        // 优先使用现有的HTML结构
+        let listContainer = document.getElementById('attachmentList');
+        if (!listContainer) {
+            listContainer = document.getElementById('attachment-list');
+        }
         if (!listContainer) return;
 
         if (this.attachments.length === 0) {
@@ -220,6 +277,7 @@ class EmailAttachmentUploader {
             progressFill.style.width = percent + '%';
             progressText.textContent = Math.round(percent) + '%';
         }
+        // 如果没有进度条容器，可以在控制台显示或创建简单的进度提示
     }
 
     hideProgress() {

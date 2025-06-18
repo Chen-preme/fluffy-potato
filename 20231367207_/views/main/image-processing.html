@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<%- include('./comp_head.html') %>
+<body>
+    <div class="image-processing-container">
+        <h1><i class="fas fa-image"></i> 图片处理工具</h1>
+        
+        <!-- 文件上传区域 -->
+        <div class="processing-section">
+            <h2>选择图片</h2>
+            <div class="upload-area" id="uploadArea">
+                <i class="fas fa-cloud-upload-alt fa-3x" style="color: #ddd; margin-bottom: 10px;"></i>
+                <p>点击选择图片或拖拽图片到此处</p>
+                <p style="color: #666; font-size: 14px;">支持 JPG、PNG、GIF、WebP 等格式，最大 10MB</p>
+                <input type="file" id="imageInput" accept="image/*" style="display: none;">
+            </div>
+            
+            <!-- 图片预览 -->
+            <div id="previewContainer" class="preview-container hidden">
+                <div class="preview-box">
+                    <h4>原图</h4>
+                    <img id="originalImage" class="preview-image" alt="原图">
+                    <div id="originalInfo" class="image-info"></div>
+                </div>
+                <div class="preview-box">
+                    <h4>处理结果</h4>
+                    <img id="processedImage" class="preview-image hidden" alt="处理结果">
+                    <div id="processedInfo" class="result-info hidden"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 处理选项 -->
+        <div class="processing-section" id="processingOptions" style="display: none;">
+            <div class="tab-container">
+                <div class="tab-buttons">
+                    <button class="tab-button active" data-tab="compress">图片压缩</button>
+                    <button class="tab-button" data-tab="resize">尺寸调整</button>
+                    <button class="tab-button" data-tab="convert">格式转换</button>
+                    <button class="tab-button" data-tab="thumbnail">生成缩略图</button>
+                    <button class="tab-button" data-tab="smart">智能压缩</button>
+                    <button class="tab-button" data-tab="batch">批量处理</button>
+                </div>
+                
+                <!-- 图片压缩 -->
+                <div class="tab-content active" id="compress">
+                    <h3>图片压缩</h3>
+                    <div class="processing-options">
+                        <div class="option-group">
+                            <div class="form-group">
+                                <label for="compressQuality">压缩质量 (1-100)</label>
+                                <input type="range" id="compressQuality" class="form-control" min="1" max="100" value="80">
+                                <span id="qualityValue">80</span>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="progressive" checked> 渐进式JPEG
+                                </label>
+                            </div>
+                            <button class="btn btn-primary" onclick="compressImage()">开始压缩</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 尺寸调整 -->
+                <div class="tab-content" id="resize">
+                    <h3>尺寸调整</h3>
+                    <div class="processing-options">
+                        <div class="option-group">
+                            <div class="form-group">
+                                <label for="resizeWidth">宽度 (像素)</label>
+                                <input type="number" id="resizeWidth" class="form-control" placeholder="留空保持比例">
+                            </div>
+                            <div class="form-group">
+                                <label for="resizeHeight">高度 (像素)</label>
+                                <input type="number" id="resizeHeight" class="form-control" placeholder="留空保持比例">
+                            </div>
+                            <div class="form-group">
+                                <label for="resizeFit">缩放模式</label>
+                                <select id="resizeFit" class="form-control">
+                                    <option value="inside">内适应</option>
+                                    <option value="outside">外适应</option>
+                                    <option value="cover">覆盖</option>
+                                    <option value="contain">包含</option>
+                                    <option value="fill">填充</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" onclick="resizeImage()">调整尺寸</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 格式转换 -->
+                <div class="tab-content" id="convert">
+                    <h3>格式转换</h3>
+                    <div class="processing-options">
+                        <div class="option-group">
+                            <div class="form-group">
+                                <label for="convertFormat">目标格式</label>
+                                <select id="convertFormat" class="form-control">
+                                    <option value="jpeg">JPEG</option>
+                                    <option value="png">PNG</option>
+                                    <option value="webp">WebP</option>
+                                    <option value="avif">AVIF</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="convertQuality">质量 (1-100)</label>
+                                <input type="range" id="convertQuality" class="form-control" min="1" max="100" value="80">
+                                <span id="convertQualityValue">80</span>
+                            </div>
+                            <button class="btn btn-primary" onclick="convertFormat()">转换格式</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 生成缩略图 -->
+                <div class="tab-content" id="thumbnail">
+                    <h3>生成缩略图</h3>
+                    <div class="processing-options">
+                        <div class="option-group">
+                            <div class="form-group">
+                                <label for="thumbWidth">宽度 (像素)</label>
+                                <input type="number" id="thumbWidth" class="form-control" value="200">
+                            </div>
+                            <div class="form-group">
+                                <label for="thumbHeight">高度 (像素)</label>
+                                <input type="number" id="thumbHeight" class="form-control" value="200">
+                            </div>
+                            <div class="form-group">
+                                <label for="thumbFit">缩放模式</label>
+                                <select id="thumbFit" class="form-control">
+                                    <option value="cover">覆盖</option>
+                                    <option value="contain">包含</option>
+                                    <option value="fill">填充</option>
+                                    <option value="inside">内适应</option>
+                                    <option value="outside">外适应</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" onclick="generateThumbnail()">生成缩略图</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 智能压缩 -->
+                <div class="tab-content" id="smart">
+                    <h3>智能压缩</h3>
+                    <div class="processing-options">
+                        <div class="option-group">
+                            <div class="form-group">
+                                <label for="targetSize">目标文件大小 (KB)</label>
+                                <input type="number" id="targetSize" class="form-control" value="500" min="50" max="5000">
+                            </div>
+                            <p style="color: #666; font-size: 14px;">系统会自动调整压缩参数以达到目标文件大小</p>
+                            <button class="btn btn-primary" onclick="smartCompress()">智能压缩</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 批量处理 -->
+                <div class="tab-content" id="batch">
+                    <h3>批量处理</h3>
+                    <div class="processing-options">
+                        <div class="option-group">
+                            <div class="form-group">
+                                <label for="batchFiles">选择多个图片</label>
+                                <input type="file" id="batchFiles" class="form-control" multiple accept="image/*">
+                            </div>
+                            <div class="form-group">
+                                <label for="batchOperation">处理操作</label>
+                                <select id="batchOperation" class="form-control">
+                                    <option value="compress">压缩</option>
+                                    <option value="resize">调整尺寸</option>
+                                    <option value="convert">格式转换</option>
+                                </select>
+                            </div>
+                            <div id="batchOptions" class="form-group">
+                                <!-- 动态生成的选项 -->
+                            </div>
+                            <button class="btn btn-primary" onclick="batchProcess()">批量处理</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 进度条 -->
+        <div id="progressContainer" class="processing-section hidden">
+            <h3>处理进度</h3>
+            <div class="progress">
+                <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+            </div>
+            <p id="progressText">准备中...</p>
+        </div>
+        
+        <!-- 结果显示 -->
+        <div id="resultContainer" class="processing-section hidden">
+            <h3>处理结果</h3>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+    
+    <script src="/js/image-processing.js"></script>
+</body>
+</html>
